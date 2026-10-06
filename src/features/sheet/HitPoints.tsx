@@ -1,0 +1,383 @@
+/**
+ * Hit points and what's on the character right now: damage, healing and Temporary HP, death
+ * saves, conditions and Exhaustion, Concentration, Heroic Inspiration; and the rests.
+ */
+
+import { useState } from "react";
+import type { ConditionDef, PlaySheet } from "srd-rules-engine";
+import { Explain } from "@/components/Explain";
+import { Icon } from "@/components/Icon";
+import { Button, cx, Dialog, Gems, HpBar, Reasons, Section } from "@/components/ui";
+import { damageTypes } from "@/engine/constants";
+import { t } from "@/i18n";
+import { titleCase } from "@/lib/format";
+import { useTable } from "@/queries";
+import { usePlay } from "./usePlay";
+
+export function HitPointsPanel({ id, sheet }: { id: string; sheet: PlaySheet }) {
+  const { act, reasons, busy } = usePlay(id);
+  const { play } = sheet;
+  const [amount, setAmount] = useState("");
+  const [damageType, setDamageType] = useState("");
+  const n = Number.parseInt(amount, 10);
+  const valid = Number.isInteger(n) && n >= 0;
+
+  return (
+    <>
+      <Section title={t("sheet.hitPoints")}>
+        <div className="flex items-baseline gap-2">
+          <span className="font-display text-4xl font-bold tabular-nums">{play.hp.current}</span>
+          <span className="text-ink-muted">/</span>
+          {sheet.max_hp ? (
+            <span className="font-display text-2xl">
+              <ExplainMax sheet={sheet} />
+            </span>
+          ) : (
+            <span>{play.hp.max}</span>
+          )}
+          {play.hp.temp > 0 && (
+            <span className="ml-auto rounded bg-blue/20 px-2 text-blue">
+              +{play.hp.temp} {t("sheet.temp")}
+            </span>
+          )}
+        </div>
+        <HpBar hp={play.hp.current} max={play.hp.max} temp={play.hp.temp} className="mt-1 mb-3" />
+        {(play.dying || play.stable || play.dead) && (
+          <p className={cx("mb-2 font-semibold", play.dead ? "text-blood" : "text-gold")}>
+            {play.dead ? t("sheet.dead") : play.stable ? t("sheet.stable") : t("sheet.dying")}
+          </p>
+        )}
+        <Reasons reasons={reasons} className="mb-2" />
+        <form
+          className="space-y-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+          }}
+        >
+          <div className="flex gap-2">
+            <label className="flex-1">
+              <span className="sr-only">{t("sheet.amount")}</span>
+              <input
+                className="field"
+                inputMode="numeric"
+                placeholder={t("sheet.amount")}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))}
+              />
+            </label>
+            <label className="flex-1">
+              <span className="sr-only">{t("sheet.damageType")}</span>
+              <select
+                className="field"
+                value={damageType}
+                onChange={(e) => setDamageType(e.target.value)}
+              >
+                <option value="">{t("sheet.untyped")}</option>
+                {damageTypes().map((d) => (
+                  <option key={d} value={d}>
+                    {titleCase(d)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
+            <Button
+              size="sm"
+              variant="danger"
+              icon="swords"
+              disabled={!valid || busy}
+              onClick={async () => {
+                const ok = await act({
+                  type: "damage",
+                  amount: n,
+                  ...(damageType ? { damage_type: damageType } : {}),
+                });
+                if (ok) setAmount("");
+              }}
+            >
+              {t("sheet.damage")}
+            </Button>
+            <Button
+              size="sm"
+              icon="heart"
+              disabled={!valid || busy}
+              onClick={async () => {
+                if (await act({ type: "heal", amount: n })) setAmount("");
+              }}
+            >
+              {t("sheet.heal")}
+            </Button>
+            <Button
+              size="sm"
+              icon="shield"
+              disabled={!valid || busy}
+              onClick={async () => {
+                if (await act({ type: "set_temp_hp", amount: n })) setAmount("");
+              }}
+            >
+              {t("sheet.temp")}
+            </Button>
+          </div>
+        </form>
+        {(play.dying || play.death_saves.successes > 0 || play.death_saves.failures > 0) && (
+          <div className="mt-3 space-y-1.5 border-t border-line pt-3">
+            <h3 className="font-semibold">{t("sheet.deathSaves")}</h3>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="w-20 text-ink-muted">{t("sheet.successes")}</span>
+              <Gems total={3} spent={3 - play.death_saves.successes} label={t("sheet.successes")} />
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="w-20 text-ink-muted">{t("sheet.failures")}</span>
+              <Gems total={3} spent={3 - play.death_saves.failures} label={t("sheet.failures")} />
+            </div>
+            <div className="flex gap-1.5">
+              <Button
+                size="sm"
+                icon="d20"
+                disabled={busy}
+                onClick={() => void act({ type: "death_save" })}
+              >
+                {t("sheet.rollDeathSave")}
+              </Button>
+              <Button size="sm" disabled={busy} onClick={() => void act({ type: "stabilize" })}>
+                {t("sheet.stabilize")}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Section>
+      <ConditionsPanel id={id} sheet={sheet} />
+    </>
+  );
+}
+
+function ExplainMax({ sheet }: { sheet: PlaySheet }) {
+  if (!sheet.max_hp) return <>{sheet.play.hp.max}</>;
+  return <Explain label={t("summary.hp")} total={sheet.max_hp.total} parts={sheet.max_hp.parts} />;
+}
+
+function ConditionsPanel({ id, sheet }: { id: string; sheet: PlaySheet }) {
+  const { act, reasons, busy } = usePlay(id);
+  const { data: conditions } = useTable<ConditionDef>("conditions");
+  const { play } = sheet;
+  const active = new Set(play.conditions.map((c) => c.id));
+  return (
+    <Section title={t("sheet.conditions")}>
+      <Reasons reasons={reasons} className="mb-2" />
+      {play.conditions.length > 0 && (
+        <ul className="mb-2 flex flex-wrap gap-1.5">
+          {play.conditions.map((c) => (
+            <li key={c.id}>
+              <span
+                className={cx("plaque plaque-sm", c.implied && "opacity-70")}
+                title={c.description.split("\n")[0]}
+              >
+                <ConditionMedal id={c.id} />
+                {c.name}
+                {!c.implied && (
+                  <button
+                    type="button"
+                    className="ml-1 text-ink-muted hover:text-blood"
+                    aria-label={`${t("common.remove")}: ${c.name}`}
+                    disabled={busy}
+                    onClick={() => void act({ type: "remove_condition", condition: c.id })}
+                  >
+                    <Icon name="x" size={14} />
+                  </button>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <label className="flex items-center gap-2">
+        <span className="sr-only">{t("sheet.addCondition")}</span>
+        <select
+          className="field"
+          value=""
+          disabled={busy}
+          onChange={(e) => {
+            if (e.target.value) void act({ type: "add_condition", condition: e.target.value });
+          }}
+        >
+          <option value="">{t("sheet.addCondition")}</option>
+          {(conditions ?? [])
+            .filter((c) => c.id !== "exhaustion" && !active.has(c.id))
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+        </select>
+      </label>
+      <div className="mt-3 grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2 text-sm">
+        <span className="text-ink-muted">{t("sheet.exhaustion")}</span>
+        <select
+          className="field max-w-[6rem]"
+          aria-label={t("sheet.exhaustion")}
+          value={play.exhaustion}
+          disabled={busy}
+          onChange={(e) => void act({ type: "set_exhaustion", level: Number(e.target.value) })}
+        >
+          {[0, 1, 2, 3, 4, 5, 6].map((l) => (
+            <option key={l} value={l}>
+              {l}
+            </option>
+          ))}
+        </select>
+        <span className="text-ink-muted">{t("sheet.concentration")}</span>
+        <span className="flex items-center gap-2">
+          {play.concentration ? (
+            <>
+              <Icon name="concentration" size={16} className="text-violet" />
+              <span className="flex-1">{play.concentration}</span>
+              <Button
+                size="sm"
+                icon="x"
+                iconOnly
+                label={t("sheet.endConcentration")}
+                disabled={busy}
+                onClick={() => void act({ type: "set_concentration", spell: null })}
+              />
+            </>
+          ) : (
+            <span className="text-ink-faint">{t("sheet.concentrationNone")}</span>
+          )}
+        </span>
+        <span className="text-ink-muted">{t("sheet.inspiration")}</span>
+        <span>
+          <Button
+            size="sm"
+            icon="star"
+            on={play.heroic_inspiration}
+            aria-pressed={play.heroic_inspiration}
+            disabled={busy}
+            onClick={() => void act({ type: "set_inspiration", value: !play.heroic_inspiration })}
+          >
+            {play.heroic_inspiration ? t("sheet.on") : t("sheet.off")}
+          </Button>
+        </span>
+      </div>
+    </Section>
+  );
+}
+
+/** A condition as a round medallion (red when it hinders); the name is next to it or in a label. */
+export function ConditionMedal({
+  id,
+  size = 18,
+  label,
+}: {
+  id: string;
+  size?: number;
+  label?: string;
+}) {
+  const letters = id.slice(0, 2).toUpperCase();
+  const className =
+    "inline-flex flex-none items-center justify-center rounded-full border border-blood bg-blood-dim font-bold text-ink";
+  const style = { width: size, height: size, fontSize: Math.max(9, size * 0.45) };
+  if (label) {
+    return (
+      <span className={className} style={style} role="img" aria-label={label}>
+        {letters}
+      </span>
+    );
+  }
+  return (
+    <span className={className} style={style} aria-hidden="true">
+      {letters}
+    </span>
+  );
+}
+
+export function RestButtons({ id, sheet }: { id: string; sheet: PlaySheet }) {
+  const { act, reasons, busy, clear } = usePlay(id);
+  const [open, setOpen] = useState<"short" | "long" | null>(null);
+  const [spend, setSpend] = useState<Record<number, number>>({});
+  const close = () => {
+    setOpen(null);
+    setSpend({});
+    clear();
+  };
+  return (
+    <>
+      <Button size="sm" icon="hourglass" onClick={() => setOpen("short")}>
+        {t("sheet.shortRest")}
+      </Button>
+      <Button size="sm" icon="moon" onClick={() => setOpen("long")}>
+        {t("sheet.longRest")}
+      </Button>
+      <Dialog
+        open={open !== null}
+        onOpenChange={(o) => {
+          if (!o) close();
+        }}
+        title={open === "long" ? t("sheet.longRest") : t("sheet.shortRest")}
+        footer={
+          <>
+            <Button onClick={close}>{t("common.cancel")}</Button>
+            <Button
+              variant="gold"
+              icon={open === "long" ? "moon" : "hourglass"}
+              disabled={busy}
+              onClick={async () => {
+                const ok =
+                  open === "long"
+                    ? await act({ type: "long_rest" })
+                    : await act({
+                        type: "short_rest",
+                        hit_dice: Object.entries(spend).flatMap(([die, count]) =>
+                          Array.from({ length: count }, () => ({ die: Number(die) })),
+                        ),
+                      });
+                if (ok) close();
+              }}
+            >
+              {t("common.confirm")}
+            </Button>
+          </>
+        }
+      >
+        <Reasons reasons={reasons} className="mb-2" />
+        {open === "short" && (
+          <div className="space-y-2">
+            <p className="text-sm text-ink-muted">{t("sheet.shortRestDice")}</p>
+            {sheet.play.hit_dice.map((d) => {
+              const left = d.total - d.spent;
+              const count = spend[d.die] ?? 0;
+              return (
+                <div key={d.die} className="flex items-center gap-3">
+                  <span className="w-12 font-semibold">d{d.die}</span>
+                  <span className="text-sm text-ink-muted">
+                    {t("common.left", { left, total: d.total })}
+                  </span>
+                  <span className="ml-auto flex items-center gap-1.5">
+                    <Button
+                      size="sm"
+                      icon="minus"
+                      iconOnly
+                      label={`${t("common.remove")} d${d.die}`}
+                      disabled={count === 0}
+                      onClick={() => setSpend({ ...spend, [d.die]: count - 1 })}
+                    />
+                    <output className="w-6 text-center tabular-nums">{count}</output>
+                    <Button
+                      size="sm"
+                      icon="plus"
+                      iconOnly
+                      label={t("sheet.spendHitDie", { die: d.die })}
+                      disabled={count >= left}
+                      onClick={() => setSpend({ ...spend, [d.die]: count + 1 })}
+                    />
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Dialog>
+    </>
+  );
+}

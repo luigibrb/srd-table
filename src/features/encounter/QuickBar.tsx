@@ -1,0 +1,216 @@
+/**
+ * What the acting combatant can do now (`combatantOptions`), as tiles grouped by what they cost:
+ * Action, Bonus Action, Reaction, Free, Legendary, plus favourites. Every option the engine lists
+ * is shown; one it wouldn't take now is greyed out with its reason. A tile with nothing to fill in
+ * is sent at once; the others open the composer.
+ */
+
+import { useState } from "react";
+import type { CombatantOptions, EncounterAction, OptionCost, OptionEntry } from "srd-rules-engine";
+import type { IconName } from "@/components/Icon";
+import { OptionButton } from "@/components/OptionButton";
+import { Button, cx, Reasons } from "@/components/ui";
+import { t, tn } from "@/i18n";
+import { useDocuments } from "@/store/documents";
+import { useSettings } from "@/store/settings";
+import { oddsText } from "./ActionComposer";
+
+/** A stable empty list: a store selector must not return a new array each time. */
+const NO_FAVORITES: readonly string[] = [];
+
+type Group = "favorites" | "action" | "bonus_action" | "reaction" | "free" | "legendary";
+
+const GROUP_OF: Readonly<Record<OptionCost, Group>> = {
+  action: "action",
+  attack: "action",
+  bonus_action: "bonus_action",
+  reaction: "reaction",
+  free: "free",
+  movement: "free",
+  legendary: "legendary",
+};
+
+type Kind = keyof Omit<CombatantOptions, "id" | "name" | "turn" | "economy">;
+const KINDS: readonly Kind[] = [
+  "attacks",
+  "spells",
+  "features",
+  "save_actions",
+  "legendary",
+  "standard",
+  "zones",
+];
+const ICON: Readonly<Record<Kind, IconName>> = {
+  attacks: "swords",
+  spells: "sparkle",
+  features: "bolt",
+  save_actions: "flame",
+  legendary: "star",
+  standard: "move",
+  zones: "area",
+};
+
+export interface Tile {
+  readonly entry: OptionEntry;
+  readonly kind: Kind;
+  readonly key: string;
+}
+
+/** A stable key for a favourite: the action's type and what it uses (not its changing label). */
+export function favoriteKey(action: EncounterAction): string {
+  const a = action as Record<string, unknown>;
+  const what =
+    a.attack ?? a.spell ?? a.feature ?? a.ability ?? a.action ?? a.option ?? a.zone ?? "";
+  const variant = [
+    "light_extra",
+    "cleave",
+    "granted",
+    "thrown",
+    "opportunity",
+    "reaction",
+    "bonus_action",
+  ]
+    .filter((k) => a[k] === true)
+    .join("+");
+  return `${action.type}:${String(what)}${variant ? `:${variant}` : ""}`;
+}
+
+export function tilesOf(options: CombatantOptions): Tile[] {
+  return KINDS.flatMap((kind) =>
+    options[kind].map((entry, i) => ({
+      entry,
+      kind,
+      key: `${kind}:${i}:${favoriteKey(entry.action)}`,
+    })),
+  );
+}
+
+export function QuickBar({
+  encounterId,
+  options,
+  favoriteOwner,
+  onCompose,
+  needsComposer,
+}: {
+  encounterId: string;
+  options: CombatantOptions;
+  /** Whose favourites (a character id, or the monster's catalog id). */
+  favoriteOwner: string;
+  onCompose: (entry: OptionEntry) => void;
+  needsComposer: (entry: OptionEntry) => boolean;
+}) {
+  const send = useDocuments((s) => s.encounterAction);
+  const favorites = useSettings((s) => s.settings.favorites[favoriteOwner] ?? NO_FAVORITES);
+  const toggleFavorite = useSettings((s) => s.toggleFavorite);
+  const tiles = tilesOf(options);
+  const groups: Group[] = ["favorites", "action", "bonus_action", "reaction", "free", "legendary"];
+  const present = groups.filter((g) =>
+    g === "favorites"
+      ? favorites.length > 0
+      : tiles.some((tile) => GROUP_OF[tile.entry.cost] === g),
+  );
+  const [group, setGroup] = useState<Group>(present[0] ?? "action");
+  const active = present.includes(group) ? group : (present[0] ?? "action");
+  const [reasons, setReasons] = useState<readonly string[] | null>(null);
+  const shown = tiles.filter((tile) =>
+    active === "favorites"
+      ? favorites.includes(favoriteKey(tile.entry.action))
+      : GROUP_OF[tile.entry.cost] === active,
+  );
+
+  async function use(tile: Tile) {
+    setReasons(null);
+    if (needsComposer(tile.entry)) return onCompose(tile.entry);
+    const result = await send(encounterId, tile.entry.action);
+    if (!result.ok) setReasons(result.reasons);
+  }
+
+  const { economy } = options;
+  return (
+    <section aria-label={t("table.options")} className="panel p-2">
+      <div className="mb-2 flex flex-wrap items-center gap-1.5">
+        <div role="tablist" aria-label={t("table.options")} className="flex flex-wrap gap-1">
+          {present.map((g) => (
+            <button
+              key={g}
+              type="button"
+              role="tab"
+              aria-selected={active === g}
+              onClick={() => setGroup(g)}
+              className={cx(
+                "plaque plaque-sm",
+                active === g && "border-gold bg-plaque-lit text-gold-hi",
+              )}
+            >
+              {g === "favorites" ? "★ " : ""}
+              {t(`table.group.${g}`)}
+            </button>
+          ))}
+        </div>
+        <section
+          className="ml-auto flex flex-wrap items-center gap-2 text-[13px] text-ink-muted"
+          aria-label={t("table.economy")}
+        >
+          <Economy label={t("table.action")} on={economy.action} />
+          <Economy label={t("table.bonusAction")} on={economy.bonus_action} />
+          <Economy label={t("table.reaction")} on={economy.reaction} />
+          <span>{t("table.movement", { feet: economy.movement })}</span>
+          {economy.attacks_left > 0 && <span>{tn("table.attacksLeft", economy.attacks_left)}</span>}
+          {economy.legendary && <span>{t("table.legendaryLeft", economy.legendary)}</span>}
+        </section>
+      </div>
+      <Reasons reasons={reasons} className="mb-2" />
+      <ul role="tabpanel" className="flex gap-1.5 overflow-x-auto pb-1">
+        {shown.map((tile) => {
+          const fav = favorites.includes(favoriteKey(tile.entry.action));
+          return (
+            <li key={tile.key} className="relative flex-none">
+              <OptionButton
+                variant="tile"
+                icon={ICON[tile.kind]}
+                reason={tile.entry.available ? null : (tile.entry.reason ?? "")}
+                onClick={() => void use(tile)}
+                detail={[
+                  t(`table.cost.${tile.entry.cost}`),
+                  tile.entry.uses ? t("table.uses", tile.entry.uses) : null,
+                  oddsText(tile.entry),
+                  tile.entry.note,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              >
+                {tile.entry.label}
+              </OptionButton>
+              <Button
+                variant="ghost"
+                className={cx(
+                  "!absolute top-0 right-0 !p-0.5 text-[13px]",
+                  fav ? "text-gold" : "text-ink-faint",
+                )}
+                aria-pressed={fav}
+                label={fav ? t("table.removeFavorite") : t("table.addFavorite")}
+                iconOnly
+                icon="star"
+                onClick={() => toggleFavorite(favoriteOwner, favoriteKey(tile.entry.action))}
+              />
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+function Economy({ label, on }: { label: string; on: boolean }) {
+  return (
+    <span
+      className={cx("flex items-center gap-1", on ? "text-ink" : "text-ink-faint line-through")}
+    >
+      <span
+        className={cx("h-2 w-2 rotate-45", on ? "bg-gold" : "border border-line-strong")}
+        aria-hidden="true"
+      />
+      {label}
+    </span>
+  );
+}

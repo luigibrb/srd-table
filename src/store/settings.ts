@@ -1,0 +1,110 @@
+/**
+ * Campaign settings: a small document of its own (IndexedDB), not an engine document. Packs and
+ * sources configure the catalog; decision modes say who answers decisions after a roll.
+ */
+
+import { create } from "zustand";
+import { engine } from "@/engine/client";
+
+export type DecisionMode = "ask" | "auto";
+export type Theme = "night" | "parchment";
+
+export interface CampaignSettings {
+  readonly version: 1;
+  /** Content packs in load order (the SRD first), served at `content/<id>/`. */
+  readonly packs: readonly string[];
+  /** Sources the campaign allows; `null`: every source of the loaded packs. */
+  readonly sources: readonly string[] | null;
+  /**
+   * Who answers decisions after a roll, for new combatants. `ask` stops the action for the player
+   * (or the GM, for monsters); `auto` takes the engine's recommendation. Per combatant later.
+   */
+  readonly character_decisions: DecisionMode;
+  readonly monster_decisions: DecisionMode;
+  readonly theme: Theme;
+  readonly locale: string;
+  /** Dev: fix the dice seed so a bug can be replayed (`null`: random). */
+  readonly dev_seed: number | null;
+  /** Quick-bar favourites by character (or monster) id: keys of the options' actions. */
+  readonly favorites: Readonly<Record<string, readonly string[]>>;
+}
+
+export const DEFAULT_SETTINGS: CampaignSettings = {
+  version: 1,
+  packs: ["srd-5.2.1"],
+  sources: null,
+  character_decisions: "ask",
+  monster_decisions: "ask",
+  theme: "night",
+  locale: "en",
+  dev_seed: null,
+  favorites: {},
+};
+
+interface SettingsState {
+  settings: CampaignSettings;
+  update(patch: Partial<Omit<CampaignSettings, "version">>): void;
+  toggleFavorite(character: string, label: string): void;
+  replace(settings: CampaignSettings): void;
+  /** Change the packs and sources: the engine rebuilds its catalog; every view recomputes. */
+  setContent(packs: readonly string[], sources: readonly string[] | null): Promise<void>;
+  /** Fix the dice seed (dev), or go back to a random one. */
+  setDevSeed(seed: number | null): Promise<void>;
+}
+
+export const useSettings = create<SettingsState>()((set) => ({
+  settings: DEFAULT_SETTINGS,
+  update(patch) {
+    set((s) => ({ settings: { ...s.settings, ...patch } }));
+  },
+  toggleFavorite(character, label) {
+    set((s) => {
+      const current = s.settings.favorites[character] ?? [];
+      const next = current.includes(label)
+        ? current.filter((l) => l !== label)
+        : [...current, label];
+      return {
+        settings: { ...s.settings, favorites: { ...s.settings.favorites, [character]: next } },
+      };
+    });
+  },
+  replace(settings) {
+    set({ settings });
+  },
+  async setContent(packs, sources) {
+    await engine().configure({ packs, sources });
+    set((s) => ({ settings: { ...s.settings, packs, sources } }));
+  },
+  async setDevSeed(seed) {
+    await engine().setSeed(seed);
+    set((s) => ({ settings: { ...s.settings, dev_seed: seed } }));
+  },
+}));
+
+/** Read a stored settings object, keeping known fields and filling defaults. */
+export function readSettings(raw: unknown): CampaignSettings {
+  if (typeof raw !== "object" || raw === null) return DEFAULT_SETTINGS;
+  const r = raw as Partial<Record<keyof CampaignSettings, unknown>>;
+  const mode = (v: unknown, d: DecisionMode): DecisionMode => (v === "ask" || v === "auto" ? v : d);
+  const strings = (v: unknown) =>
+    Array.isArray(v) && v.every((x) => typeof x === "string") ? (v as string[]) : null;
+  return {
+    version: 1,
+    packs: strings(r.packs) ?? DEFAULT_SETTINGS.packs,
+    sources: r.sources === null ? null : (strings(r.sources) ?? null),
+    character_decisions: mode(r.character_decisions, DEFAULT_SETTINGS.character_decisions),
+    monster_decisions: mode(r.monster_decisions, DEFAULT_SETTINGS.monster_decisions),
+    theme: r.theme === "parchment" ? "parchment" : "night",
+    locale: typeof r.locale === "string" ? r.locale : "en",
+    dev_seed: typeof r.dev_seed === "number" && Number.isInteger(r.dev_seed) ? r.dev_seed : null,
+    favorites:
+      typeof r.favorites === "object" && r.favorites !== null
+        ? Object.fromEntries(
+            Object.entries(r.favorites as Record<string, unknown>).flatMap(([k, v]) => {
+              const list = strings(v);
+              return list ? [[k, list]] : [];
+            }),
+          )
+        : {},
+  };
+}

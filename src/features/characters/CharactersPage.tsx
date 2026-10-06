@@ -1,0 +1,194 @@
+/** Characters: the list, create, import and export (JSON), duplicate, delete. */
+
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useRef, useState } from "react";
+import { Icon } from "@/components/Icon";
+import { Portrait } from "@/components/Portrait";
+import { Button, Dialog, Empty, HpBar, PageTitle, Reasons } from "@/components/ui";
+import { t, tn } from "@/i18n";
+import { downloadJson, pairCharacterFiles, readJsonFiles } from "@/lib/files";
+import { fileSlug } from "@/lib/format";
+import { usePlayView } from "@/queries";
+import { type CharacterRecord, useDocuments } from "@/store/documents";
+import { useUi } from "@/store/ui";
+
+export function CharactersPage() {
+  const characters = useDocuments((s) => s.characters);
+  const create = useDocuments((s) => s.createCharacter);
+  const importCharacter = useDocuments((s) => s.importCharacter);
+  const navigate = useNavigate();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+  const list = Object.values(characters).sort((a, b) => b.updated - a.updated);
+
+  async function onCreate() {
+    const id = await create();
+    await navigate({ to: "/characters/$id/build", params: { id }, search: { step: "class" } });
+  }
+
+  async function onImport(files: FileList | null) {
+    if (!files?.length) return;
+    const { files: read, bad } = await readJsonFiles(Array.from(files));
+    const errors = bad.map((name) => t("errors.badFile", { file: name }));
+    const imported: string[] = [];
+    for (const { build, state } of pairCharacterFiles(read)) {
+      const result = await importCharacter(build.data, state?.data);
+      if (result.ok) imported.push(build.name);
+      else errors.push(`${build.name}: ${result.reasons.join("; ")}`);
+    }
+    setImportErrors(errors);
+    if (imported.length)
+      useUi.getState().toast(imported.map((name) => t("characters.imported", { name })));
+    if (fileInput.current) fileInput.current.value = "";
+  }
+
+  return (
+    <div className="mx-auto max-w-6xl p-4 sm:p-6">
+      <div className="flex flex-wrap items-start gap-3">
+        <div className="flex-1">
+          <PageTitle sub={t("characters.sub")}>{t("characters.title")}</PageTitle>
+        </div>
+        <Button variant="gold" icon="plus" onClick={onCreate}>
+          {t("characters.new")}
+        </Button>
+        <Button
+          icon="upload"
+          onClick={() => fileInput.current?.click()}
+          title={t("characters.importHint")}
+        >
+          {t("common.import")}
+        </Button>
+        <input
+          ref={fileInput}
+          type="file"
+          accept="application/json,.json"
+          multiple
+          hidden
+          aria-label={t("characters.importHint")}
+          onChange={(e) => void onImport(e.target.files)}
+        />
+      </div>
+      <Reasons reasons={importErrors} className="mb-4" />
+      {list.length === 0 ? (
+        <div className="panel">
+          <Empty icon="sheet">{t("characters.empty")}</Empty>
+        </div>
+      ) : (
+        <>
+          <p className="mb-2 text-sm text-ink-muted">{tn("characters.count", list.length)}</p>
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {list.map((c) => (
+              <li key={c.id}>
+                <CharacterCard record={c} />
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
+
+function CharacterCard({ record }: { record: CharacterRecord }) {
+  const { data } = usePlayView(record.id);
+  const duplicate = useDocuments((s) => s.duplicateCharacter);
+  const remove = useDocuments((s) => s.deleteCharacter);
+  const [confirm, setConfirm] = useState(false);
+  const name = record.build.name || t("common.unnamed");
+  const sheet = data?.sheet;
+  const classes = sheet?.classes.map((c) => `${c.name} ${c.level}`).join(" / ");
+  const slug = fileSlug(record.build.name, record.id);
+
+  return (
+    <article className="panel flex h-full gap-3 p-3">
+      <Portrait id={record.id} name={name} size={72} />
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <h2 className="truncate font-display text-xl font-semibold text-gold [font-variant:small-caps]">
+          {name}
+        </h2>
+        <p className="text-sm text-ink-muted">
+          {sheet && classes
+            ? t("characters.levelClass", { level: sheet.level, classes })
+            : t("characters.noClass")}
+        </p>
+        {sheet?.play && sheet.max_hp && (
+          <div className="flex items-center gap-2 text-sm">
+            <Icon name="heart" size={15} className="text-blood" />
+            <span className="tabular-nums">
+              {sheet.play.hp.current} / {sheet.play.hp.max}
+            </span>
+            <HpBar
+              hp={sheet.play.hp.current}
+              max={sheet.play.hp.max}
+              temp={sheet.play.hp.temp}
+              className="flex-1"
+            />
+          </div>
+        )}
+        <div className="mt-auto flex flex-wrap gap-1.5 pt-2">
+          <Link
+            to="/characters/$id/sheet"
+            params={{ id: record.id }}
+            search={{}}
+            className="plaque plaque-sm"
+          >
+            <Icon name="sheet" size={16} />
+            {t("characters.sheet")}
+          </Link>
+          <Link
+            to="/characters/$id/build"
+            params={{ id: record.id }}
+            search={{}}
+            className="plaque plaque-sm"
+          >
+            <Icon name="edit" size={16} />
+            {t("characters.build")}
+          </Link>
+          <Button
+            size="sm"
+            icon="download"
+            iconOnly
+            label={t("characters.exportBuild")}
+            onClick={() => downloadJson(`${slug}.json`, record.build)}
+          />
+          <Button
+            size="sm"
+            icon="scroll"
+            iconOnly
+            label={t("characters.exportState")}
+            onClick={() => downloadJson(`${slug}.state.json`, record.state)}
+          />
+          <Button
+            size="sm"
+            icon="copy"
+            iconOnly
+            label={t("common.duplicate")}
+            onClick={() => void duplicate(record.id)}
+          />
+          <Button
+            size="sm"
+            variant="danger"
+            icon="trash"
+            iconOnly
+            label={t("common.delete")}
+            onClick={() => setConfirm(true)}
+          />
+        </div>
+      </div>
+      <Dialog
+        open={confirm}
+        onOpenChange={setConfirm}
+        title={t("common.delete")}
+        description={t("common.reallyDelete", { name })}
+        footer={
+          <>
+            <Button onClick={() => setConfirm(false)}>{t("common.cancel")}</Button>
+            <Button variant="danger" icon="trash" onClick={() => remove(record.id)}>
+              {t("common.delete")}
+            </Button>
+          </>
+        }
+      />
+    </article>
+  );
+}

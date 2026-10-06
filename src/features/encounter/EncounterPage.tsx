@@ -1,0 +1,204 @@
+/**
+ * The table: the Initiative order on the left; the map, then what the acting combatant can do, in
+ * the middle; the GM's controls, the selection and the combat log on the right. The GM acts for
+ * anyone; a player acts for their own character (reactions included, on others' turns).
+ */
+
+import { Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import type { OptionEntry } from "srd-rules-engine";
+import { Button, Empty, Spinner } from "@/components/ui";
+import type { CombatantView } from "@/engine/facade";
+import { t } from "@/i18n";
+import { useCombatantOptions, useEncounterView } from "@/queries";
+import { canRedo, canUndo, type EncounterRecord, useDocuments } from "@/store/documents";
+import { useUi } from "@/store/ui";
+import { BattleMap } from "../map/BattleMap";
+import { ActionComposer, needsComposer } from "./ActionComposer";
+import { CombatLog } from "./CombatLog";
+import { CombatPanel } from "./CombatPanel";
+import { DecisionDialog } from "./DecisionDialog";
+import { InitiativeRail } from "./InitiativeRail";
+import { QuickBar } from "./QuickBar";
+import { SelectionPanel } from "./SelectionPanel";
+import { useTableUi } from "./tableUi";
+
+export function EncounterPage({ id }: { id: string }) {
+  const record = useDocuments((s) => s.encounters[id]);
+  if (!record) {
+    return (
+      <Empty icon="table">
+        {t("errors.documentGone")}{" "}
+        <Link to="/encounters" className="text-gold underline">
+          {t("encounters.title")}
+        </Link>
+      </Empty>
+    );
+  }
+  return <Table record={record} />;
+}
+
+function Table({ record }: { record: EncounterRecord }) {
+  const { data: view, error } = useEncounterView(record.id);
+  const role = useUi((s) => s.role);
+  const gm = role.kind === "gm";
+  const rename = useDocuments((s) => s.renameEncounter);
+  const clearLog = useDocuments((s) => s.clearLog);
+  const undo = useDocuments((s) => s.undo);
+  const redo = useDocuments((s) => s.redo);
+  const undoable = useDocuments((s) => canUndo(s, record.id));
+  const redoable = useDocuments((s) => canRedo(s, record.id));
+  const selected = useTableUi((s) => s.selected);
+  const pinned = useTableUi((s) => s.pinned);
+  const select = useTableUi((s) => s.select);
+  const [composing, setComposing] = useState<OptionEntry | null>(null);
+  const [name, setName] = useState(record.name);
+  useEffect(() => setName(record.name), [record.name]);
+
+  const mine = (c: CombatantView) =>
+    role.kind === "player" && c.character !== null && c.character === role.character;
+  const canControl = (c: CombatantView) => gm || mine(c);
+  const own = view?.combatants.find(mine) ?? null;
+
+  // The selection follows whose turn it is, unless picked by hand; a player starts on their own.
+  const current = view?.current ?? null;
+  useEffect(() => {
+    if (!view) return;
+    if (!gm && own && !pinned) select(own.id, false);
+    else if (gm && !pinned && current) select(current, false);
+  }, [view, gm, own, pinned, current, select]);
+  // A new turn releases a pinned selection.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only when the turn changes
+  useEffect(() => {
+    useTableUi.setState({ pinned: false });
+    setComposing(null);
+  }, [current, record.encounter.round]);
+
+  const selectedView = view?.combatants.find((c) => c.id === selected) ?? null;
+  const actor = selectedView && canControl(selectedView) ? selectedView : !gm ? own : null;
+  const options = useCombatantOptions(record.id, actor?.id ?? null);
+  const pending = record.encounter.pending;
+  const pendingWho = pending ? view?.combatants.find((c) => c.id === pending.combatant) : undefined;
+
+  if (error)
+    return <div className="p-6 text-blood">{t("errors.engine", { message: error.message })}</div>;
+  if (!view) {
+    return (
+      <div className="p-6">
+        <Spinner />
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-3 p-3 lg:h-full lg:min-h-0 lg:grid-cols-[250px_minmax(0,1fr)_340px]">
+      <aside className="flex max-h-[45vh] min-h-0 flex-col gap-2 lg:max-h-none">
+        <div className="panel p-2">
+          <label className="sr-only" htmlFor="encounter-name">
+            {t("encounters.name")}
+          </label>
+          <input
+            id="encounter-name"
+            className="w-full bg-transparent font-display text-xl font-semibold text-gold outline-none [font-variant:small-caps] focus:border-b focus:border-gold"
+            value={name}
+            readOnly={!gm}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={() => name.trim() && name !== record.name && rename(record.id, name.trim())}
+          />
+          <div className="flex items-center gap-1 text-sm text-ink-muted">
+            <span className="flex-1">
+              {view.round > 0
+                ? t("encounters.round", { round: view.round })
+                : t("encounters.notStarted")}
+            </span>
+            {gm && (
+              <>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  icon="undo"
+                  iconOnly
+                  label={t("common.undo")}
+                  disabled={!undoable}
+                  onClick={() => undo(record.id)}
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  icon="redo"
+                  iconOnly
+                  label={t("common.redo")}
+                  disabled={!redoable}
+                  onClick={() => redo(record.id)}
+                />
+              </>
+            )}
+          </div>
+        </div>
+        <InitiativeRail view={view} gm={gm} />
+      </aside>
+
+      <div className="flex min-h-[28rem] min-w-0 flex-col gap-2">
+        <div className="min-h-0 flex-1">
+          <BattleMap
+            encounterId={record.id}
+            encounter={record.encounter}
+            view={view}
+            gm={gm}
+            controllable={canControl}
+          />
+        </div>
+        {pending && (
+          <DecisionDialog
+            encounterId={record.id}
+            pending={pending}
+            who={pendingWho?.name ?? pending.combatant}
+            canAnswer={gm || (pendingWho ? mine(pendingWho) : false)}
+          />
+        )}
+        {!pending && actor && options.data && composing && (
+          <ActionComposer
+            key={composing.label}
+            encounterId={record.id}
+            view={view}
+            options={options.data}
+            entry={composing}
+            gm={gm}
+            onClose={() => setComposing(null)}
+          />
+        )}
+        {!pending && actor && options.data && !composing && (
+          <>
+            {!options.data.turn && !gm && (
+              <p className="text-sm text-ink-muted">{t("table.playerWaiting")}</p>
+            )}
+            <QuickBar
+              encounterId={record.id}
+              options={options.data}
+              favoriteOwner={actor.character ?? actor.monster ?? actor.id}
+              onCompose={setComposing}
+              needsComposer={needsComposer}
+            />
+          </>
+        )}
+        {!pending && actor && !options.data && options.isFetching && <Spinner />}
+      </div>
+
+      <aside className="flex min-h-0 flex-col gap-3 lg:overflow-y-auto">
+        {gm && <CombatPanel record={record} view={view} />}
+        <SelectionPanel
+          encounterId={record.id}
+          encounter={record.encounter}
+          combatant={selectedView}
+          gm={gm}
+          canAct={selectedView ? canControl(selectedView) : false}
+        />
+        <CombatLog
+          log={record.log}
+          onClear={gm ? () => clearLog(record.id) : undefined}
+          className="min-h-[14rem] flex-1"
+        />
+      </aside>
+    </div>
+  );
+}

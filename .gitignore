@@ -1,0 +1,20 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Generated: the split SRD copied from the engine package (scripts/copy-content.ts)
+public/content/
+
+# Packs that aren't SRD never go in git or in a public build
+content/private/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+
+# Local environment and editor state
+.env
+.env.*
+.DS_Store

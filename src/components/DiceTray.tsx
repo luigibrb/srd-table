@@ -1,0 +1,297 @@
+/**
+ * Dice results on screen for a few seconds: the numbers the engine already rolled (the UI never
+ * rolls). A stub for 3D dice: a renderer that animates `DiceShown` items can replace
+ * `DiceCard` without touching anything else.
+ */
+
+import { useEffect } from "react";
+import type {
+  AttackResult,
+  CheckResult,
+  D20Roll,
+  RolledDamage,
+  RollResult,
+  SaveResult,
+} from "srd-rules-engine";
+import type { ActionResult } from "@/engine/facade";
+import { signed, t } from "@/i18n";
+import { type DiceShown, useUi } from "@/store/ui";
+import { Icon } from "./Icon";
+import { Button, cx } from "./ui";
+
+const SHOW_MS = 7000;
+
+export function DiceTray() {
+  const dice = useUi((s) => s.dice);
+  return (
+    <section
+      aria-label={t("dice.tray")}
+      aria-live="polite"
+      className="pointer-events-none fixed right-4 bottom-4 z-40 flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-2"
+    >
+      {dice.map((d) => (
+        <DiceCard key={d.id} item={d} />
+      ))}
+    </section>
+  );
+}
+
+function DiceCard({ item }: { item: DiceShown }) {
+  const dismiss = useUi((s) => s.dismissDice);
+  useEffect(() => {
+    const timer = setTimeout(() => dismiss(item.id), SHOW_MS);
+    return () => clearTimeout(timer);
+  }, [dismiss, item.id]);
+  return (
+    <div className="panel rise-in pointer-events-auto border-gold/60 p-3 shadow-panel">
+      <div className="mb-1 flex items-center gap-2">
+        <Icon name="d20" size={18} className="text-gold" />
+        <span className="flex-1 font-display text-lg font-semibold text-gold">
+          {item.who || t("dice.roll")}
+        </span>
+        <Button
+          variant="ghost"
+          icon="x"
+          iconOnly
+          label={t("common.close")}
+          onClick={() => dismiss(item.id)}
+        />
+      </div>
+      {item.kind === "roll" ? (
+        <FreeRoll roll={item.roll} />
+      ) : item.kind === "damage" ? (
+        <Damage damage={item.damage} />
+      ) : (
+        <ActionRolls result={item.result} />
+      )}
+    </div>
+  );
+}
+
+function FreeRoll({ roll }: { roll: RollResult }) {
+  return (
+    <Line
+      label={roll.dice_expression}
+      dice={roll.rolls}
+      modifier={roll.modifier}
+      total={roll.total}
+    />
+  );
+}
+
+/** One roll: `Attack  [17, 4]  +5  = 22`. */
+function Line({
+  label,
+  dice,
+  kept,
+  modifier,
+  total,
+  outcome,
+  tone,
+}: {
+  label: string;
+  dice: readonly number[];
+  kept?: number;
+  modifier?: number;
+  total: number;
+  outcome?: string;
+  tone?: "good" | "bad" | null;
+}) {
+  return (
+    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm">
+      <span className="min-w-0 flex-1 text-ink-muted">{label}</span>
+      <span className="flex gap-1">
+        {dice.map((d, i) => (
+          <span
+            key={i}
+            className={cx(
+              "inline-flex h-6 min-w-6 items-center justify-center rounded border px-1 tabular-nums",
+              kept !== undefined && dice.length > 1 && d !== kept
+                ? "border-line text-ink-faint line-through"
+                : "border-gold/70 text-ink",
+            )}
+          >
+            {d}
+          </span>
+        ))}
+      </span>
+      {modifier !== undefined && modifier !== 0 && (
+        <span className="tabular-nums text-ink-muted">{signed(modifier)}</span>
+      )}
+      <span className="font-display text-2xl leading-none font-bold tabular-nums text-gold-hi">
+        = {total}
+      </span>
+      {outcome && (
+        <span
+          className={cx(
+            "w-full text-right font-semibold",
+            tone === "good" && "text-green",
+            tone === "bad" && "text-blood",
+          )}
+        >
+          {outcome}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function D20({
+  label,
+  roll,
+  bonus,
+  total,
+  outcome,
+  tone,
+}: {
+  label: string;
+  roll: D20Roll;
+  bonus: number;
+  total: number;
+  outcome?: string;
+  tone?: "good" | "bad" | null;
+}) {
+  const mode =
+    roll.mode === "normal"
+      ? ""
+      : ` (${t(roll.mode === "advantage" ? "dice.advantage" : "dice.disadvantage")})`;
+  return (
+    <Line
+      label={`${label}${mode}`}
+      dice={roll.rolls}
+      kept={roll.d20}
+      modifier={bonus}
+      total={total}
+      {...(outcome ? { outcome } : {})}
+      tone={tone ?? null}
+    />
+  );
+}
+
+function Damage({ damage }: { damage: RolledDamage }) {
+  return (
+    <>
+      {damage.parts.map((p, i) => (
+        <Line
+          key={i}
+          label={`${p.dice ?? ""} ${p.type}`.trim()}
+          dice={p.rolls}
+          modifier={p.bonus}
+          total={p.total}
+        />
+      ))}
+      {damage.parts.length > 1 && (
+        <div className="text-right text-sm">{t("dice.damageTotal", { total: damage.total })}</div>
+      )}
+    </>
+  );
+}
+
+function SaveLine({ save, label }: { save: SaveResult; label: string }) {
+  const outcome = save.automatic_failure
+    ? t("dice.autoFail", { condition: save.automatic_failure })
+    : save.legendary_resistance
+      ? t("dice.legendaryResistance")
+      : save.success
+        ? t("dice.success")
+        : t("dice.failure");
+  return (
+    <D20
+      label={`${label} · ${t("dice.vsDc", { dc: save.dc })}`}
+      roll={save.roll}
+      bonus={save.bonus}
+      total={save.total}
+      outcome={outcome}
+      tone={save.success ? "good" : "bad"}
+    />
+  );
+}
+
+export function ActionRolls({ result }: { result: NonNullable<ActionResult> }) {
+  if ("target_ac" in result) return <Attack result={result} />;
+  if ("spell" in result) {
+    return (
+      <div className="space-y-1">
+        <div className="text-sm font-semibold">{result.spell}</div>
+        {result.targets.map((target, i) => (
+          <div key={i}>
+            {target.attack && (
+              <D20
+                label={`${target.name} · ${t("dice.attack")}`}
+                roll={target.attack.roll}
+                bonus={result.attack_bonus ?? 0}
+                total={target.attack.total}
+                outcome={
+                  target.attack.critical_hit
+                    ? t("dice.critical")
+                    : target.attack.hit
+                      ? t("dice.hit")
+                      : t("dice.miss")
+                }
+                tone={target.attack.hit ? "good" : "bad"}
+              />
+            )}
+            {target.save && <SaveLine save={target.save} label={target.name} />}
+          </div>
+        ))}
+        {result.damage && <Damage damage={result.damage} />}
+        {result.follow_up?.targets.map((target, i) =>
+          target.save ? <SaveLine key={`f${i}`} save={target.save} label={target.name} /> : null,
+        )}
+        {result.follow_up?.damage && <Damage damage={result.follow_up.damage} />}
+      </div>
+    );
+  }
+  if ("action" in result && "targets" in result) {
+    return (
+      <div className="space-y-1">
+        <div className="text-sm font-semibold">{result.action}</div>
+        {result.targets.map((target, i) =>
+          target.save ? <SaveLine key={i} save={target.save} label={target.name} /> : null,
+        )}
+        {result.damage && <Damage damage={result.damage} />}
+      </div>
+    );
+  }
+  if ("skill" in result) return <Check result={result} />;
+  return <SaveLine save={result} label={result.name} />;
+}
+
+function Attack({ result }: { result: AttackResult }) {
+  const outcome = result.critical_hit
+    ? t("dice.critical")
+    : result.hit
+      ? t("dice.hit")
+      : t("dice.miss");
+  return (
+    <div className="space-y-1">
+      <div className="text-sm font-semibold">
+        {result.attack} → {result.target}
+      </div>
+      <D20
+        label={t("dice.vsAc", { ac: result.target_ac })}
+        roll={result.roll}
+        bonus={result.attack_bonus}
+        total={result.total}
+        outcome={outcome}
+        tone={result.hit ? "good" : "bad"}
+      />
+      {result.damage && <Damage damage={result.damage} />}
+    </div>
+  );
+}
+
+function Check({ result }: { result: CheckResult }) {
+  const outcome =
+    result.success === null ? undefined : result.success ? t("dice.success") : t("dice.failure");
+  return (
+    <D20
+      label={`${result.skill ?? result.ability}${result.dc !== null ? ` · ${t("dice.vsDc", { dc: result.dc })}` : ""}`}
+      roll={result.roll}
+      bonus={result.bonus}
+      total={result.total}
+      {...(outcome ? { outcome } : {})}
+      tone={result.success === null ? null : result.success ? "good" : "bad"}
+    />
+  );
+}
