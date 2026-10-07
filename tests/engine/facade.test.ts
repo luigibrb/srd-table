@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { nodeFacade } from "../../src/engine/node";
+import { wizard } from "../fixtures/characters";
 
 const engine = nodeFacade({ seed: 7 });
 
@@ -152,5 +153,28 @@ describe("map helpers", () => {
     const c = await engine.constants();
     expect(c.check_skills.influence).toContain("persuasion");
     expect(c.skills.find((s) => s.id === "stealth")?.ability).toBe("dex");
+  });
+
+  it("evaluates the build as played today: an after-a-rest pick replaces the build's", async () => {
+    const build = await wizard(engine, 3);
+    let state = await engine.createState(build);
+    const saved = await engine.evaluate(build);
+    const prepared = saved.choices.find((c) => c.rest_change !== null && c.required > 0);
+    if (!prepared) throw new Error("no after-a-rest choice");
+    const other = prepared.options.find((o) => !o.unavailable && !prepared.selected.includes(o.id));
+    if (!other) throw new Error("nothing else to pick");
+    const today = [...prepared.selected.slice(1), other.id];
+    const r = await engine.applyPlayAction(build, state, {
+      type: "set_choice",
+      key: prepared.key,
+      values: today,
+    });
+    if (!r.ok) throw new Error(r.reasons.join("; "));
+    state = r.state;
+    const played = await engine.evaluatePlay(build, state);
+    expect(played.choices.find((c) => c.key === prepared.key)?.selected).toEqual(today);
+    expect(
+      (await engine.evaluate(build)).choices.find((c) => c.key === prepared.key)?.selected,
+    ).toEqual(prepared.selected);
   });
 });

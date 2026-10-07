@@ -72,6 +72,7 @@ import {
   parseBuild,
   parseEncounter,
   parseState,
+  playBuild,
   pointBuyStatus,
   type Reachable,
   type Rng,
@@ -360,6 +361,11 @@ export interface EngineFacade {
 
   // builder
   evaluate(build: CharacterBuild): Promise<BuildView>;
+  /**
+   * The builder's view of the build as played today (the state's "after a rest" picks overlaid,
+   * the engine's `playBuild`): the options those choices offer today.
+   */
+  evaluatePlay(build: CharacterBuild, state: CharacterState): Promise<BuildView>;
   editBuild(build: CharacterBuild, edit: BuildEdit): Promise<Outcome<BuildChange>>;
   /** What an edit would remove and ask again, without applying it. */
   previewEdit(build: CharacterBuild, edit: BuildEdit): Promise<Outcome<ChangePreview>>;
@@ -471,6 +477,8 @@ export function createInProcessFacade(options: FacadeOptions): EngineFacade {
     newEncounter: async (opts) => createEncounter(opts),
 
     evaluate: (build) => content.run("builder", (catalog) => buildView(build, catalog)),
+    evaluatePlay: (build, state) =>
+      content.run("builder", (catalog) => buildView(playBuild(build, state, catalog), catalog)),
     editBuild: (build, edit) =>
       content.run("builder", (catalog) => attempt(() => applyEdit(build, catalog, edit))),
     previewEdit: (build, edit) =>

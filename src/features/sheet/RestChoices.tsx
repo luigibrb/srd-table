@@ -1,18 +1,19 @@
 /**
  * Choices you can change after a rest (prepared spells, Weapon Mastery…): today's picks live in
- * the play state (`set_choice`, `reset_choice`) and replace the build's while playing.
+ * the play state (`set_choice`, `reset_choice`) and replace the build's while playing. Options
+ * and picks come from the build as played today (`playBuild`), which `set_choice` validates
+ * against.
  */
 
 import { Button, Reasons, Section } from "@/components/ui";
-import type { ChoiceView } from "@/engine/facade";
 import { t } from "@/i18n";
-import { useBuildView } from "@/queries";
+import { usePlayBuildView } from "@/queries";
 import { useDocuments } from "@/store/documents";
 import { ChoiceCard } from "../builder/ChoiceCard";
 import { usePlay } from "./usePlay";
 
 export function RestChoices({ id }: { id: string }) {
-  const { data: view } = useBuildView(id);
+  const { data: view } = usePlayBuildView(id);
   const state = useDocuments((s) => s.characters[id]?.state);
   const { act, reasons } = usePlay(id);
   if (!view || !state) return null;
@@ -27,11 +28,10 @@ export function RestChoices({ id }: { id: string }) {
       <div className="space-y-3">
         {choices.map((c) => {
           const today = state.choices[c.key];
-          const choice: ChoiceView = today ? { ...c, selected: today } : c;
           return (
             <div key={c.key}>
               <ChoiceCard
-                choice={choice}
+                choice={c}
                 onPick={async (values) => {
                   // A refusal shows above, with the section's other reasons.
                   await act({ type: "set_choice", key: c.key, values: [...values] });

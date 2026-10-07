@@ -58,6 +58,22 @@ export function useStartingEquipment(id: string, enabled: boolean) {
   });
 }
 
+/** The build as played today (`playBuild`): the options of "after a rest" choices today. */
+export function usePlayBuildView(id: string) {
+  const content = useContentKey();
+  const rev = useRev(id);
+  const record = useDocuments((s) => s.characters[id]);
+  return useQuery({
+    queryKey: ["play-build", id, rev, content],
+    queryFn: () => {
+      if (!record) throw new Error("no character");
+      return engine().evaluatePlay(record.build, record.state);
+    },
+    enabled: record !== undefined,
+    placeholderData: keepPreviousData,
+  });
+}
+
 /** The play sheet (`computePlaySheet`) and the state's issues. */
 export function usePlayView(id: string | undefined) {
   const content = useContentKey();
