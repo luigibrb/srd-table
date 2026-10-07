@@ -175,7 +175,12 @@ export function useSquaresWithin(
   return useQuery({
     queryKey: ["within", ...key, combatantId, feet],
     queryFn: () =>
-      engine().squaresWithin(record?.encounter as Encounter, combatantId as string, feet as number),
+      engine().squaresWithin(
+        record?.encounter as Encounter,
+        partyOf(record?.encounter as Encounter, useDocuments.getState().characters),
+        combatantId as string,
+        feet as number,
+      ),
     enabled: record !== undefined && combatantId !== null && feet !== null,
   });
 }

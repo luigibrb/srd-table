@@ -21,7 +21,6 @@ import {
   type AreaPreview,
   type AreaRequest,
   abilityModifier,
-  areaSquares,
   BuildError,
   builder,
   type Catalog,
@@ -44,12 +43,14 @@ import {
   type Encounter,
   type EncounterAction,
   EncounterActionSchema,
+  type EncounterContext,
   EncounterError,
   encounterCombatant,
   applyAction as engineApplyAction,
   applyEncounterAction as engineApplyEncounterAction,
   previewArea as enginePreviewArea,
   previewMove as enginePreviewMove,
+  zoneSquares as engineZoneSquares,
   evaluate,
   gridDistance,
   type Issue,
@@ -274,10 +275,7 @@ export interface CombatantView {
   readonly dying: boolean;
   readonly dead: boolean;
   readonly size: string | null;
-  /**
-   * Squares on a side of its space. The engine doesn't expose a combatant's space yet
-   * (docs/ENGINE-GAPS.md): until it does, every creature counts as one square here.
-   */
+  /** Squares on a side of its space (the engine's `space`: Large 2, Huge 3…); `position` is its top-left square. */
   readonly space: number;
   readonly position: { readonly x: number; readonly y: number } | null;
   readonly used: Encounter["combatants"][number]["used"];
@@ -292,7 +290,7 @@ export interface ZoneView {
   readonly id: string;
   readonly label: string;
   readonly by: string;
-  /** Squares it covers (`"x,y"`), from the engine's `areaSquares`. */
+  /** Squares it covers now (`"x,y"`), from the engine's `zoneSquares`. */
   readonly squares: readonly string[];
   /** A wall between squares (Wall of Force): grid-line segments. */
   readonly segments: readonly { readonly from: GridXY; readonly to: GridXY }[];
@@ -403,7 +401,12 @@ export interface EngineFacade {
   /** Feet between two squares on the grid (`gridDistance`), for measuring. */
   distance(from: { x: number; y: number }, to: { x: number; y: number }): Promise<number>;
   /** Squares within `feet` of a combatant's space (`gridDistance`), to show reach and range. */
-  squaresWithin(encounter: Encounter, id: string, feet: number): Promise<readonly string[]>;
+  squaresWithin(
+    encounter: Encounter,
+    party: Party,
+    id: string,
+    feet: number,
+  ): Promise<readonly string[]>;
 
   // dice
   /** A free roll (`2d6+3`), with the worker's dice. */
@@ -566,19 +569,21 @@ export function createInProcessFacade(options: FacadeOptions): EngineFacade {
         enginePreviewMove(encounter, move, { catalog, characters: party }),
       ),
     distance: async (from, to) => gridDistance(from, 1, to, 1),
-    squaresWithin: async (encounter, id, feet) => {
-      const c = encounter.combatants.find((x) => x.id === id);
-      if (!c?.position) return [];
-      const r = Math.ceil(feet / 5);
-      const out: string[] = [];
-      for (let x = c.position.x - r; x <= c.position.x + UNKNOWN_SPACE - 1 + r; x++) {
-        for (let y = c.position.y - r; y <= c.position.y + UNKNOWN_SPACE - 1 + r; y++) {
-          const d = gridDistance(c.position, UNKNOWN_SPACE, { x, y }, 1);
-          if (d > 0 && d <= feet) out.push(`${x},${y}`);
+    squaresWithin: (encounter, party, id, feet) =>
+      content.run("encounter", (catalog) => {
+        const c = encounter.combatants.find((x) => x.id === id);
+        if (!c?.position) return [];
+        const space = encounterCombatant(encounter, id, { catalog, characters: party }).space;
+        const r = Math.ceil(feet / 5);
+        const out: string[] = [];
+        for (let x = c.position.x - r; x <= c.position.x + space - 1 + r; x++) {
+          for (let y = c.position.y - r; y <= c.position.y + space - 1 + r; y++) {
+            const d = gridDistance(c.position, space, { x, y }, 1);
+            if (d > 0 && d <= feet) out.push(`${x},${y}`);
+          }
         }
-      }
-      return out;
-    },
+        return out;
+      }),
     roll: async (expression) => attempt(() => ({ roll: roll(expression, rng) })),
     rollDamage: async (parts, critical) => rollDamage(parts, { critical, rng }),
   };
@@ -599,27 +604,17 @@ function checkSkills(): Record<string, Skill[]> {
 }
 
 /**
- * A combatant's space in squares: not exposed by the engine yet (docs/ENGINE-GAPS.md, "Creature
- * space"), so the map counts every creature as one square until it is.
+ * The squares a zone covers now (`"x,y"`): a wall spell's own list (and the wall's squares),
+ * else the engine's `zoneSquares` (an Emanation follows its caster and leaves out its space;
+ * nothing when the zone isn't on the grid).
  */
-const UNKNOWN_SPACE = 1;
-
-function zoneSquares(encounter: Encounter, zone: Encounter["zones"][number]): string[] {
-  // A wall spell's zone lists its squares (and the wall's own).
+function zoneSquaresOf(
+  encounter: Encounter,
+  zone: Encounter["zones"][number],
+  ctx: EncounterContext,
+): string[] {
   if (zone.squares) return [...zone.squares, ...zone.wall_squares].map((p) => `${p.x},${p.y}`);
-  try {
-    if (zone.area.shape === "emanation") {
-      if (zone.point)
-        return [...areaSquares(zone.area, { position: zone.point, size: zone.space }, {})];
-      const caster = encounter.combatants.find((c) => c.id === zone.by);
-      if (!caster?.position) return [];
-      return [...areaSquares(zone.area, { position: caster.position, size: UNKNOWN_SPACE }, {})];
-    }
-    if (!zone.point) return [];
-    return [...areaSquares(zone.area, { position: zone.point, size: 1 }, { point: zone.point })];
-  } catch {
-    return [];
-  }
+  return (engineZoneSquares(encounter, zone.id, ctx) ?? []).map((p) => `${p.x},${p.y}`);
 }
 
 function listOf<T>(value: T | readonly T[]): readonly T[] {
@@ -781,7 +776,7 @@ function encounterView(encounter: Encounter, party: Party, catalog: Catalog): En
           dying: play?.dying ?? false,
           dead: play?.dead ?? false,
           size: view.size,
-          space: UNKNOWN_SPACE,
+          space: view.space,
           error: null,
         },
       ];
@@ -799,7 +794,8 @@ function encounterView(encounter: Encounter, party: Party, catalog: Catalog): En
           dying: false,
           dead: false,
           size: null,
-          space: UNKNOWN_SPACE,
+          // The engine couldn't build its view: one square, so it still shows on the map.
+          space: 1,
           error: error instanceof Error ? error.message : String(error),
         },
       ];
@@ -809,7 +805,7 @@ function encounterView(encounter: Encounter, party: Party, catalog: Catalog): En
     id: z.id,
     label: z.label,
     by: z.by,
-    squares: zoneSquares(encounter, z),
+    squares: zoneSquaresOf(encounter, z, ctx),
     segments: z.segments,
     difficult: z.difficult,
   }));

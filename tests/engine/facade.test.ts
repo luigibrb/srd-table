@@ -141,7 +141,11 @@ describe("map helpers", () => {
     expect(move.ok).toBe(true);
     expect(move.path.at(-1)).toEqual({ x: 3, y: 0 });
     expect(await engine.distance({ x: 0, y: 0 }, { x: 3, y: 1 })).toBe(15);
-    expect(await engine.squaresWithin(r.encounter, "goblin-warrior", 5)).toHaveLength(8);
+    expect(await engine.squaresWithin(r.encounter, {}, "goblin-warrior", 5)).toHaveLength(8);
+    // The dragon is Huge: 3×3 squares, so 16 squares are within 5 feet of its space.
+    expect(await engine.squaresWithin(r.encounter, {}, "adult-red-dragon", 5)).toHaveLength(16);
+    const view = await engine.encounterView(r.encounter, {});
+    expect(view.combatants.find((c) => c.id === "adult-red-dragon")?.space).toBe(3);
   });
 
   it("gives the skills each check action takes, from the engine's schema", async () => {

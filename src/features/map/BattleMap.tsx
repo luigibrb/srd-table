@@ -635,8 +635,6 @@ function Token({
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase())
     .join("");
-  const sizeLetter =
-    c.size && !["medium", "small", "tiny"].includes(c.size) ? c.size[0]?.toUpperCase() : null;
   return (
     // biome-ignore lint/a11y/useSemanticElements: an SVG token can't be a <button>
     <g
@@ -692,19 +690,6 @@ function Token({
       >
         {initials}
       </text>
-      {sizeLetter && (
-        <text
-          x={x + size - 8}
-          y={y + 12}
-          textAnchor="end"
-          className="fill-ink"
-          fontSize={13}
-          fontWeight={700}
-          pointerEvents="none"
-        >
-          {sizeLetter}
-        </text>
-      )}
       {c.conditions.length > 0 && (
         <circle
           cx={x + 8}

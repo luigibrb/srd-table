@@ -22,8 +22,6 @@ The app never works around a gap with rules of its own.
 
 | Id | What the app is missing | Engine status |
 |---|---|---|
-| R4 | Creature space | open |
-| R5 | Emanation zones' squares | open |
 | R6 | Cunning / Brutal Strike on attack options | open |
 | R7 | Rest-change options as played | open |
 | R8 | Magic item bases | open |
@@ -33,20 +31,6 @@ The app never works around a gap with rules of its own.
 | R12 | `unassignedValues` | open |
 | R13 | Translatable engine messages | open (large) |
 | R14 | Positions required when the map is in use (proposal) | open, low priority |
-
-### R4. Creature space
-
-- **Meanwhile.** `UNKNOWN_SPACE = 1` in `src/engine/facade.ts`: tokens one square wide with the
-  size's letter (`BattleMap.tsx` `Token`), reach highlight and Emanations from one square.
-- **When done.** Use the engine's `space` in the facade's combatant view; delete `UNKNOWN_SPACE`
-  and the size letter.
-
-### R5. Emanation zones' squares
-
-- **Meanwhile.** `zoneSquares` in `src/engine/facade.ts` calls `areaSquares` with a one-square
-  origin for an Emanation around its caster.
-- **When done.** Draw `zone.squares` (or the engine's function) for every zone; delete that
-  branch of `zoneSquares`.
 
 ### R6. Cunning / Brutal Strike
 
@@ -107,3 +91,5 @@ The app never works around a gap with rules of its own.
 | R1 | Starting equipment taken after the state exists | `aef3cf1` (main) | sheet notice + `take_starting_equipment` (`InventoryTab.tsx` `StartingEquipment`) |
 | R2 | Exploration and points of interest | `3b81071` (main) | `ExplorationPanel.tsx`, `PointPanel.tsx`, the map's Points tool and markers, the Move hint's turns |
 | R3 | Bloodied | `d07df13` (main) | `HpBar` `bloodied` (red), "Bloodied" label on the rail and the sheet |
+| R4 | Creature space | `c8569e7` (main) | tokens drawn at their real size (`CombatantView.space` from the engine), reach and range from the whole space; the size letter is gone |
+| R5 | Zone squares | `c8569e7` (main) | `zoneSquaresOf` in the facade calls the engine's `zoneSquares` (an Emanation leaves out its caster's space, as the engine's saves do) |
