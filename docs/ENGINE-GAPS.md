@@ -22,19 +22,12 @@ The app never works around a gap with rules of its own.
 
 | Id | What the app is missing | Engine status |
 |---|---|---|
-| R8 | Magic item bases | open |
 | R9 | Rolls for a character outside an encounter | open |
 | R10 | Combatant ids in results | open |
 | R11 | Option previews in the builder | open |
 | R12 | `unassignedValues` | open |
 | R13 | Translatable engine messages | open (large) |
 | R14 | Positions required when the map is in use (proposal) | open, low priority |
-
-### R8. Magic item bases
-
-- **Meanwhile.** "Add an item" (`InventoryTab.tsx`) offers every item of the base's kind;
-  `add_item` refuses invalid ones.
-- **When done.** Offer only `magicItemBases`.
 
 ### R9. Rolls outside an encounter
 
@@ -80,3 +73,4 @@ The app never works around a gap with rules of its own.
 | R5 | Zone squares | `c8569e7` (main) | `zoneSquaresOf` in the facade calls the engine's `zoneSquares` (an Emanation leaves out its caster's space, as the engine's saves do) |
 | R6 | Cunning / Brutal Strike | `b22a78e` (main) | "Strike effects" in the composer from `OptionEntry.strikes` (unavailable ones disabled with the engine's reason, not hidden), merged into the attack |
 | R7 | Rest-change options as played | `7ec7459` (main) | facade `evaluatePlay` (`evaluate(playBuild(…))`) for the sheet's "Today's picks" (`RestChoices.tsx`) |
+| R8 | Magic item bases | `bcc01bd` (main) | "Add an item" offers only `magicItemBases` (facade `magicItemBases`, `useMagicItemBases`) |

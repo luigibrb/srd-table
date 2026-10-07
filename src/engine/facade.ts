@@ -59,6 +59,7 @@ import {
   lookup,
   MAX_ATTUNED,
   type MovePreview,
+  magicItemBases,
   type OptionView,
   type PackManifest,
   type Pending,
@@ -373,6 +374,8 @@ export interface EngineFacade {
 
   // play
   createState(build: CharacterBuild): Promise<CharacterState>;
+  /** The catalog items a magic item can be made from (`[]`: none, or no base). */
+  magicItemBases(magicItemId: string): Promise<readonly string[]>;
   /** What `take_starting_equipment` adds: the build's starting equipment and gold. */
   startingEquipment(build: CharacterBuild): Promise<StartingEquipment>;
   playSheet(build: CharacterBuild, state: CharacterState): Promise<PlayView>;
@@ -495,6 +498,7 @@ export function createInProcessFacade(options: FacadeOptions): EngineFacade {
     rollAbilityScores: async () => rollAbilityScores(rng),
 
     createState: (build) => content.run("play", (catalog) => createState(build, catalog)),
+    magicItemBases: (id) => content.run("play", (catalog) => magicItemBases(catalog, id)),
     startingEquipment: (build) =>
       content.run("play", (catalog) => startingEquipment(build, catalog)),
     playSheet: (build, state) =>

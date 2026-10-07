@@ -177,4 +177,15 @@ describe("map helpers", () => {
       (await engine.evaluate(build)).choices.find((c) => c.key === prepared.key)?.selected,
     ).toEqual(prepared.selected);
   });
+
+  it("lists the items a magic item can be made from", async () => {
+    expect(await engine.magicItemBases("trident-of-fish-command")).toEqual(["trident"]);
+    expect(await engine.magicItemBases("vorpal-sword")).toEqual([
+      "glaive",
+      "greatsword",
+      "longsword",
+      "scimitar",
+    ]);
+    expect((await engine.magicItemBases("weapon-1")).length).toBeGreaterThan(30);
+  });
 });

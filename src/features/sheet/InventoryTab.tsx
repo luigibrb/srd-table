@@ -14,7 +14,7 @@ import { VirtualList } from "@/components/VirtualList";
 import { constants } from "@/engine/constants";
 import { formatList, formatNumber, t } from "@/i18n";
 import { titleCase } from "@/lib/format";
-import { useStartingEquipment, useTable } from "@/queries";
+import { useMagicItemBases, useStartingEquipment, useTable } from "@/queries";
 import { usePlay } from "./usePlay";
 
 type Currency = (typeof CURRENCIES)[number];
@@ -260,16 +260,15 @@ function AddItemDialog({ id, onClose }: { id: string; onClose: () => void }) {
   );
   const magicDef =
     picked?.table === "magic_items" ? magic.data?.find((m) => m.id === picked.id) : undefined;
-  // A magic item made from a mundane one: every item of that kind is offered; the engine checks it.
-  const baseKind = magicDef?.base?.kind;
-  const bases =
-    baseKind === "weapon"
-      ? weapons.data
-      : baseKind === "armor"
-        ? armor.data
-        : baseKind
-          ? gear.data
-          : null;
+  // A magic item made from a mundane one: the items the engine says it can be made from.
+  const baseIds = useMagicItemBases(magicDef?.base ? magicDef.id : null).data;
+  const bases = useMemo(() => {
+    if (!baseIds?.length) return null;
+    const ids = new Set(baseIds);
+    return [...(weapons.data ?? []), ...(armor.data ?? []), ...(gear.data ?? [])].filter((r) =>
+      ids.has(r.id),
+    );
+  }, [baseIds, weapons.data, armor.data, gear.data]);
   const count = Number.parseInt(qty, 10);
 
   return (

@@ -46,6 +46,16 @@ export function useBuildView(id: string) {
   });
 }
 
+/** The items a magic item can be made from (`magicItemBases`). */
+export function useMagicItemBases(magicItemId: string | null) {
+  const content = useContentKey();
+  return useQuery({
+    queryKey: ["magic-bases", magicItemId, content],
+    queryFn: () => engine().magicItemBases(magicItemId as string),
+    enabled: magicItemId !== null,
+  });
+}
+
 /** What `take_starting_equipment` would add, asked only while it isn't taken (`enabled`). */
 export function useStartingEquipment(id: string, enabled: boolean) {
   const content = useContentKey();
