@@ -18,8 +18,10 @@ import { ActionComposer, needsComposer } from "./ActionComposer";
 import { CombatLog } from "./CombatLog";
 import { CombatPanel } from "./CombatPanel";
 import { DecisionDialog } from "./DecisionDialog";
+import { ExplorationPanel } from "./ExplorationPanel";
 import { InitiativeRail } from "./InitiativeRail";
 import { OffMapNotice } from "./OffMapNotice";
+import { PointDialog, PointPanel } from "./PointPanel";
 import { QuickBar } from "./QuickBar";
 import { SelectionPanel } from "./SelectionPanel";
 import { useTableUi } from "./tableUi";
@@ -52,6 +54,8 @@ function Table({ record }: { record: EncounterRecord }) {
   const selected = useTableUi((s) => s.selected);
   const pinned = useTableUi((s) => s.pinned);
   const select = useTableUi((s) => s.select);
+  const newPoint = useTableUi((s) => s.newPoint);
+  const placePoint = useTableUi((s) => s.placePoint);
   const [composing, setComposing] = useState<OptionEntry | null>(null);
   const [name, setName] = useState(record.name);
   useEffect(() => setName(record.name), [record.name]);
@@ -169,7 +173,19 @@ function Table({ record }: { record: EncounterRecord }) {
             onClose={() => setComposing(null)}
           />
         )}
-        {!pending && actor && options.data && !composing && (
+        {view.round === 0 && (
+          <ExplorationPanel
+            encounterId={record.id}
+            encounter={record.encounter}
+            view={view}
+            actor={actor}
+            gm={gm}
+          />
+        )}
+        {newPoint && gm && (
+          <PointDialog encounterId={record.id} at={newPoint} onClose={() => placePoint(null)} />
+        )}
+        {view.round > 0 && !pending && actor && options.data && !composing && (
           <>
             {!options.data.turn && !gm && (
               <p className="text-sm text-ink-muted">{t("table.playerWaiting")}</p>
@@ -187,6 +203,7 @@ function Table({ record }: { record: EncounterRecord }) {
       </div>
 
       <aside className="flex min-h-0 flex-col gap-3 lg:overflow-y-auto">
+        <PointPanel encounterId={record.id} encounter={record.encounter} view={view} gm={gm} />
         {gm && <CombatPanel record={record} view={view} />}
         <SelectionPanel
           encounterId={record.id}

@@ -1,129 +1,115 @@
 # Engine gaps
 
-What the UI needs from [`srd-rules-engine`](../../srd-rules-engine) and doesn't get yet. The UI
-never works around a gap with rules of its own: each entry says what's missing, what the app does
-meanwhile, and what would close it. Raise them in the engine repo; remove an entry when the engine
-provides it (and remove the fallback named here).
+What the app is waiting for from [`srd-rules-engine`](../../srd-rules-engine), kept for this
+repo's own work: what the app does meanwhile, where that fallback lives, and what to change once
+the engine delivers.
 
-Most important first.
+**How engine work happens.** This repo's sessions never change engine code. A need is written
+as a requirement in the engine's `docs/REQUESTS.md` (git-ignored there, read by the engine's own
+Claude Code session), with an id `R<n>`; it's tracked here under the same id. When a request is
+`done`: rebuild the engine's `dist/` (`npx tsdown --config-loader tsx` in the engine),
+`npm run content`, wire the app, delete the fallback named here, move the entry to "Done" below.
 
-## 1. Creature space on the grid
+**How a delivery is noticed.** The engine session appends an entry to its `docs/RESPONSES.md`
+(commit, CHANGELOG entry, final API names, differences), puts `Request: R<n>` in the commit's
+trailer, and may send this session a `SendMessage` nudge. Check at the start of a session and
+before engine-dependent work: `docs/RESPONSES.md` and `git -C ../srd-rules-engine log --grep
+"^Request:"`. A `needs info` entry is answered under the request in `REQUESTS.md`.
 
-**Missing.** How many squares a combatant's space is (Large 2×2, Huge 3×3…). The engine knows
-(`spaceOf` in `services/encounter.ts`) but doesn't export it, and `encounterCombatant` gives only
-`size`.
+The app never works around a gap with rules of its own.
 
-**Meanwhile.** `UNKNOWN_SPACE = 1` in `src/engine/facade.ts`: tokens are drawn one square wide
-(with the size's letter), and the range highlight and Emanation zones measure from a one-square
-space. The engine's own previews (moves, areas) and every action use the real space.
+## Waiting
 
-**Wanted.** `space` (squares per side) on a combatant view, or `spaceOf` exported.
+| Id | What the app is missing | Engine status |
+|---|---|---|
+| R3 | Bloodied | open |
+| R4 | Creature space | open |
+| R5 | Emanation zones' squares | open |
+| R6 | Cunning / Brutal Strike on attack options | open |
+| R7 | Rest-change options as played | open |
+| R8 | Magic item bases | open |
+| R9 | Rolls for a character outside an encounter | open |
+| R10 | Combatant ids in results | open |
+| R11 | Option previews in the builder | open |
+| R12 | `unassignedValues` | open |
+| R13 | Translatable engine messages | open (large) |
+| R14 | Positions required when the map is in use (proposal) | open, low priority |
 
-## 2. Emanation zones' squares
+### R3. Bloodied
 
-**Missing.** The squares of an Emanation zone around a creature (its origin is the creature's
-space: gap 1). Wall zones list their own `squares` and `segments`; the engine's `previewArea`
-gives an aimed area's exact squares and creatures; moves use `reachableSquares` and
-`previewMove` (all closed since P25 and P30).
+- **Meanwhile.** HP bars are always graphite (`HpBar`, `src/components/ui.tsx`).
+- **When done.** Red bar when `bloodied`; the rail (`InitiativeRail.tsx`) and the sheet's
+  `HitPoints.tsx` pass it to `HpBar`.
 
-**Meanwhile.** `zoneSquares` in the facade calls `areaSquares` with a one-square origin for an
-Emanation around its caster.
+### R4. Creature space
 
-**Wanted.** `zone.squares` for every zone (or a `zoneSquares(encounter, zone, ctx)`).
+- **Meanwhile.** `UNKNOWN_SPACE = 1` in `src/engine/facade.ts`: tokens one square wide with the
+  size's letter (`BattleMap.tsx` `Token`), reach highlight and Emanations from one square.
+- **When done.** Use the engine's `space` in the facade's combatant view; delete `UNKNOWN_SPACE`
+  and the size letter.
 
-## 3. Which attack options a combatant has
+### R5. Emanation zones' squares
 
-**Missing.** Whether a combatant can use Cunning Strike or Brutal Strike on an attack (`attack`
-`cunning` / `brutal`), and with which effects: `combatantOptions` doesn't list them.
+- **Meanwhile.** `zoneSquares` in `src/engine/facade.ts` calls `areaSquares` with a one-square
+  origin for an Emanation around its caster.
+- **When done.** Draw `zone.squares` (or the engine's function) for every zone; delete that
+  branch of `zoneSquares`.
 
-**Meanwhile.** The composer doesn't offer them; the engine applies neither unless asked.
+### R6. Cunning / Brutal Strike
 
-**Wanted.** On an attack option, the `cunning` / `brutal` effects it can add (and their cost).
+- **Meanwhile.** The composer (`ActionComposer.tsx`) doesn't offer them.
+- **When done.** Checkboxes in the composer from the option's list, sent as `attack.cunning` /
+  `attack.brutal`.
 
-## 4. Options for choices changed after a rest
+### R7. Rest-change options as played
 
-**Missing.** A rest-change choice's options judged against the build as played today
-(`playBuild` isn't exported, and `evaluate` judges the saved build).
+- **Meanwhile.** The sheet's "Today's picks" use the saved build's `evaluate`; `set_choice`
+  refuses with the engine's reasons when they differ.
+- **When done.** A facade method over `evaluatePlay` (or `playBuild` + `evaluate`) for those
+  lists.
 
-**Meanwhile.** The sheet's "Today's picks" list the options of the saved build's `evaluate`; the
-engine's `set_choice` play action still validates against the played build and refuses with its
-reasons.
+### R8. Magic item bases
 
-**Wanted.** `evaluate` options for the played build (an `evaluatePlay(build, state, catalog)`), or
-`playBuild` exported.
+- **Meanwhile.** "Add an item" (`InventoryTab.tsx`) offers every item of the base's kind;
+  `add_item` refuses invalid ones.
+- **When done.** Offer only `magicItemBases`.
 
-## 5. Bases a magic item can be made from
+### R9. Rolls outside an encounter
 
-**Missing.** The catalog items a magic item can be made from (`magic_items[].base` describes it
-as a rule: kind, categories, exceptions).
+- **Meanwhile.** Sheet roll buttons (`OverviewTab.tsx` `RollButton`, `CombatTab.tsx`) are
+  labelled free rolls of `1d20+bonus`.
+- **When done.** A facade `rollCheck`; the dice tray shows the mode and its reasons.
 
-**Meanwhile.** "Add an item" offers every item of the base's kind (weapons, armor, or gear for
-ammunition); `add_item` refuses an invalid base with the engine's reason.
+### R10. Combatant ids in results
 
-**Wanted.** `magicItemBases(catalog, itemId)` → item ids.
+- **Meanwhile.** The dice tray (`DiceTray.tsx`) shows target names.
+- **When done.** Link results to tokens and the rail.
 
-## 6. Translatable engine messages
+### R11. Option previews
 
-**Missing.** Engine strings (notes, option labels, issue messages, builder and play refusals,
-decision questions) are English sentences. The UI shows them verbatim and never parses them, so
-it can't translate them. Encounter refusals now carry codes (`EncounterError.codes`,
-`REFUSAL_CODES`, since P26), which a translation could key on; the rest don't.
+- **Meanwhile.** The builder's live summary updates after a pick.
+- **When done.** Show "AC 16 → 17" on each option (`ChoiceCard.tsx`).
 
-**Meanwhile.** The app's own words are in `src/i18n/` (English), ready for an Italian catalog;
-engine text stays English.
+### R12. `unassignedValues`
 
-**Wanted.** A message code and parameters next to each string (`{ code: "already_proficient",
-params: { source: "Soldier" }, text: "…" }`), or a `locale` option with translated catalogs in
-the engine. SRD content itself can be translated as a layered content pack.
+- **Meanwhile.** Each ability offers every value; assigning a taken value swaps the two
+  (`AbilitiesStep.tsx`, a convenience, not a rule).
+- **When done.** Offer only unassigned values.
 
-## 7. Rolls for a character outside an encounter
+### R13. Translatable engine messages
 
-**Missing.** Ability checks, saving throws and attack rolls for a character from its play state,
-with the Advantage or Disadvantage its conditions and features give (the encounter's `check`
-does this for a combatant; there's no equivalent on a sheet).
+- **Meanwhile.** App words in `src/i18n/` (English, ready for Italian); engine text stays English.
+- **When done.** Translate by code in the i18n catalogs; keep `text` as the fallback.
 
-**Meanwhile.** The sheet's roll buttons are plain free rolls of the engine's dice (`1d20+bonus`;
-damage through `rollDamage`), labelled as such. Inside an encounter, use the `check` action and
-attacks.
+### R14. Positions required (proposal)
 
-**Wanted.** `rollCheck(build, state, catalog, { skill | ability | save }, { rng })` and an attack
-roll on a character's attack line without a target.
+- **Meanwhile.** `OffMapNotice.tsx` warns that reach, range and areas aren't checked for a
+  combatant off a map in use.
+- **Decide first** whether the GM wants this; then a setting in `CombatPanel.tsx`.
 
-## 8. Number previews on options
+## Done
 
-**Missing.** What picking an option would change on the sheet ("Defense · AC 16→17"), as the CLI
-builder shows.
-
-**Meanwhile.** Not shown; the live summary updates after a pick.
-
-**Wanted.** A sheet diff per option (`previewOption(build, catalog, key, value)` → changed stats).
-
-## 9. Standard-array helpers
-
-**Missing.** `unassignedValues` (the values of the array or the rolls not yet assigned) isn't
-exported.
-
-**Meanwhile.** Each ability offers every value of the pool; assigning a value already in use swaps
-the two abilities (a convenience, not a rule); the engine validates every assignment.
-
-**Wanted.** `unassignedValues` exported.
-
-## 10. Combatants in results
-
-**Missing.** Results name their targets (`SpellTargetResult.name`, an index into the targets
-given), not their combatant ids.
-
-**Meanwhile.** The dice tray shows names.
-
-**Wanted.** The combatant id on each target result of an encounter action.
-
-## 11. Bloodied
-
-**Missing.** Whether a combatant or character is Bloodied (at half its Hit Points or fewer, a
-rules term in SRD 5.2.1), on the combatant view and the play sheet.
-
-**Meanwhile.** HP bars are drawn in one colour (graphite); the UI doesn't work out the half
-itself.
-
-**Wanted.** `bloodied: boolean` on `encounterCombatant`'s view and on `computePlaySheet`'s HP; the
-bar then turns red (`HpBar` in `src/components/ui.tsx`).
+| Id | What | Engine | App |
+|---|---|---|---|
+| R1 | Starting equipment taken after the state exists | `aef3cf1` (main) | sheet notice + `take_starting_equipment` (`InventoryTab.tsx` `StartingEquipment`) |
+| R2 | Exploration and points of interest | `3b81071` (main) | `ExplorationPanel.tsx`, `PointPanel.tsx`, the map's Points tool and markers, the Move hint's turns |

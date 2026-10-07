@@ -141,4 +141,55 @@ describe("encounter table", () => {
     await userEvent.click(within(options).getByRole("button", { name: "End turn" }));
     await waitFor(() => expect(useDocuments.getState().encounters[id]?.encounter.turn).toBe(1));
   });
+
+  it("explores outside a fight: the GM's pace, a halt answered, a point revealed", async () => {
+    const aerin = await useDocuments.getState().importCharacter(await fighter(engine, 3));
+    if (!aerin.ok) throw new Error("import");
+    const record = useDocuments.getState().characters[aerin.id];
+    if (!record) throw new Error("import");
+    const party = { [aerin.id]: { build: record.build, state: record.state } };
+    const r = await engine.applyEncounterAction(await engine.newEncounter(), party, [
+      { type: "add_character", character: aerin.id },
+      { type: "place", id: "aerin", x: 0, y: 0 },
+      { type: "set_exploration", notice_stops: "everyone" },
+      // DC 0 next to Aerin: noticed at once, and everyone waits.
+      { type: "add_point", at: { x: 1, y: 0 }, title: "Loose flagstone", kind: "trap", dc: 0 },
+    ]);
+    if (!r.ok) throw new Error(r.reasons.join("; "));
+    const id = storeEncounter(r.encounter);
+    await renderApp(`/encounters/${id}`);
+
+    const explore = await screen.findByRole("region", { name: "Exploration" }, { timeout: 15_000 });
+    expect(explore).toHaveTextContent("Everyone waits: Aerin noticed something.");
+    await userEvent.click(within(explore).getByRole("button", { name: "Fast" }));
+    await waitFor(() =>
+      expect(useDocuments.getState().encounters[id]?.encounter.pace).toBe("fast"),
+    );
+
+    // The GM opens the noticed point from the halt and reveals it: the halt ends.
+    await userEvent.click(within(explore).getByRole("button", { name: "Open the point" }));
+    const panel = await screen.findByRole("region", { name: "Loose flagstone" });
+    expect(panel).toHaveTextContent("Noticed by Aerin.");
+    await userEvent.click(within(panel).getByRole("button", { name: "Reveal" }));
+    await waitFor(() => {
+      const e = useDocuments.getState().encounters[id]?.encounter;
+      expect(e?.points[0]?.revealed).toBe(true);
+      expect(e?.halted).toBeNull();
+    });
+  });
+
+  it("hides points the GM hasn't revealed from players", async () => {
+    const r = await engine.applyEncounterAction(await engine.newEncounter(), {}, [
+      { type: "add_monster", monster: "goblin-warrior" },
+      { type: "add_point", at: { x: 2, y: 2 }, title: "Secret door", kind: "door" },
+      { type: "add_point", at: { x: 4, y: 2 }, title: "Old well", revealed: true },
+    ]);
+    if (!r.ok) throw new Error("setup");
+    const id = storeEncounter(r.encounter);
+    useUi.setState({ role: { kind: "player", character: null } });
+    await renderApp(`/encounters/${id}`);
+    const map = await screen.findByRole("region", { name: "Map" }, { timeout: 15_000 });
+    expect(within(map).getByRole("button", { name: "Old well" })).toBeInTheDocument();
+    expect(within(map).queryByRole("button", { name: /Secret door/ })).toBeNull();
+  });
 });
