@@ -1,6 +1,6 @@
 /**
- * Shared building blocks, in the table's look: plaque buttons, gold section titles, dialogs,
- * tabs, gems for slots and uses, HP bars. Radix provides the accessible behavior.
+ * Shared building blocks, in the table's look (Mat and Marker): buttons by weight, section titles,
+ * dialogs, tabs, tick boxes for slots and uses, HP bars. Radix provides the accessible behavior.
  */
 
 import { Dialog as RDialog, Tabs as RTabs } from "radix-ui";
@@ -14,7 +14,7 @@ export function cx(...classes: (string | false | null | undefined)[]): string {
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: IconName;
-  variant?: "plaque" | "gold" | "danger" | "ghost";
+  variant?: "normal" | "primary" | "danger" | "ghost";
   size?: "md" | "sm";
   /** Lit: the chosen tab, an option that's on. */
   on?: boolean;
@@ -26,7 +26,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   {
     icon,
-    variant = "plaque",
+    variant = "normal",
     size = "md",
     on,
     iconOnly,
@@ -47,11 +47,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       title={iconOnly ? label : rest.title}
       className={cx(
         variant === "ghost"
-          ? "inline-flex items-center gap-1.5 rounded px-1.5 py-1 text-ink-muted hover:text-gold-hi"
-          : "plaque",
-        variant === "gold" && "plaque-gold",
-        variant === "danger" && "plaque-danger",
-        size === "sm" && variant !== "ghost" && "plaque-sm",
+          ? "inline-flex items-center gap-1.5 rounded px-1.5 py-1 text-ink-muted hover:text-ink"
+          : "btn",
+        variant === "primary" && "btn-primary",
+        variant === "danger" && "btn-danger",
+        size === "sm" && variant !== "ghost" && "btn-sm",
         iconOnly && variant !== "ghost" && "!px-2",
         className,
       )}
@@ -63,7 +63,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   );
 });
 
-/** A card with a gold small-caps title, a diamond and a fading rule. */
+/** An index card with a bold title. */
 export function Section({
   title,
   actions,
@@ -96,9 +96,7 @@ export function Section({
 export function PageTitle({ children, sub }: { children: ReactNode; sub?: ReactNode }) {
   return (
     <div className="mb-4">
-      <h1 className="font-display text-3xl font-semibold tracking-wide text-gold [font-variant:small-caps]">
-        {children}
-      </h1>
+      <h1 className="font-display text-3xl font-semibold text-ink">{children}</h1>
       {sub && <p className="text-ink-muted">{sub}</p>}
     </div>
   );
@@ -132,9 +130,7 @@ export function Dialog({
           )}
         >
           <div className="mb-3 flex items-start gap-3">
-            <RDialog.Title className="flex-1 font-display text-2xl font-semibold text-gold [font-variant:small-caps]">
-              {title}
-            </RDialog.Title>
+            <RDialog.Title className="flex-1 font-display text-2xl text-ink">{title}</RDialog.Title>
             <RDialog.Close asChild>
               <Button variant="ghost" icon="x" iconOnly label={t("common.close")} />
             </RDialog.Close>
@@ -183,7 +179,7 @@ export function Tabs<T extends string>({
           <RTabs.Trigger
             key={item.value}
             value={item.value}
-            className="plaque plaque-sm data-[state=active]:border-gold data-[state=active]:bg-plaque-lit data-[state=active]:text-gold-hi"
+            className="btn btn-sm data-[state=active]:border-ink data-[state=active]:bg-hl data-[state=active]:text-hl-ink"
           >
             {item.icon && <Icon name={item.icon} size={16} />}
             {item.label}
@@ -203,7 +199,7 @@ export function Tabs<T extends string>({
   );
 }
 
-/** Spell slots or uses: one gem per use, filled while available. */
+/** Spell slots or uses: one tick box per use, ticked through once spent. */
 export function Gems({
   total,
   spent,
@@ -220,7 +216,7 @@ export function Gems({
   const left = Math.max(0, total - spent);
   const description = t("common.left", { left, total });
   const gems = Array.from({ length: total }, (_, i) => (
-    <span key={i} className="gem inline-block" data-spent={i >= left ? "true" : "false"} />
+    <span key={i} className="tick inline-block" data-spent={i >= left ? "true" : "false"} />
   ));
   return (
     <div className="flex items-center gap-2">
@@ -271,16 +267,16 @@ export function HpBar({
   className?: string;
 }) {
   const pct = max > 0 ? Math.max(0, Math.min(100, (hp / max) * 100)) : 0;
-  const color = pct > 50 ? "bg-green" : pct > 25 ? "bg-gold" : "bg-blood";
+  // Graphite, whatever the number: telling "Bloodied" needs the engine (ENGINE-GAPS.md).
   return (
     <div
-      className={cx("relative h-1.5 overflow-hidden rounded-full bg-panel-3", className)}
+      className={cx(
+        "relative h-1.5 overflow-hidden rounded-full border border-edge bg-card-2",
+        className,
+      )}
       aria-hidden="true"
     >
-      <div
-        className={cx("h-full rounded-full transition-[width]", color)}
-        style={{ width: `${pct}%` }}
-      />
+      <div className="h-full rounded-full bg-ink transition-[width]" style={{ width: `${pct}%` }} />
       {temp > 0 && <div className="absolute inset-y-0 right-0 w-1/5 bg-blue/70" />}
     </div>
   );
@@ -298,15 +294,12 @@ export function Reasons({
   return (
     <div
       role="alert"
-      className={cx(
-        "rounded-md border border-blood/60 bg-blood-dim/40 px-3 py-2 text-sm",
-        className,
-      )}
+      className={cx("rounded-md border border-red/60 bg-red-dim/40 px-3 py-2 text-sm", className)}
     >
       <ul className="space-y-0.5">
         {reasons.map((r) => (
           <li key={r} className="flex gap-2">
-            <Icon name="warning" size={16} className="mt-0.5 flex-none text-blood" />
+            <Icon name="warning" size={16} className="mt-0.5 flex-none text-red" />
             <span>{r}</span>
           </li>
         ))}
@@ -318,7 +311,7 @@ export function Reasons({
 export function Empty({ children, icon }: { children: ReactNode; icon?: IconName }) {
   return (
     <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-ink-muted">
-      {icon && <Icon name={icon} size={28} className="text-bronze" />}
+      {icon && <Icon name={icon} size={28} className="text-ink-muted" />}
       {children}
     </div>
   );
@@ -327,7 +320,7 @@ export function Empty({ children, icon }: { children: ReactNode; icon?: IconName
 export function Spinner({ label }: { label?: string }) {
   return (
     <div role="status" className="flex items-center gap-2 text-ink-muted">
-      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gold border-t-transparent" />
+      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ink border-t-transparent" />
       <span>{label ?? t("common.loading")}</span>
     </div>
   );
@@ -346,12 +339,14 @@ export function StatBox({
   return (
     <div
       className={cx(
-        "flex min-w-[4.5rem] flex-col items-center rounded-lg border border-line bg-panel-2 px-2 py-1.5",
+        "flex min-w-[4.5rem] flex-col items-center rounded border border-edge bg-card px-2 py-1.5 shadow-card",
         className,
       )}
     >
-      <span className="text-[13px] tracking-wider text-ink-muted uppercase">{label}</span>
-      <span className="font-display text-2xl font-bold leading-tight text-ink">{children}</span>
+      <span className="text-[13px] text-ink-muted">{label}</span>
+      <span className="font-display text-2xl font-extrabold leading-tight text-ink">
+        {children}
+      </span>
     </div>
   );
 }

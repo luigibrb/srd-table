@@ -48,7 +48,7 @@ export function CharactersPage() {
         <div className="flex-1">
           <PageTitle sub={t("characters.sub")}>{t("characters.title")}</PageTitle>
         </div>
-        <Button variant="gold" icon="plus" onClick={onCreate}>
+        <Button variant="primary" icon="plus" onClick={onCreate}>
           {t("characters.new")}
         </Button>
         <Button
@@ -103,9 +103,7 @@ function CharacterCard({ record }: { record: CharacterRecord }) {
     <article className="panel flex h-full gap-3 p-3">
       <Portrait id={record.id} name={name} size={72} />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <h2 className="truncate font-display text-xl font-semibold text-gold [font-variant:small-caps]">
-          {name}
-        </h2>
+        <h2 className="truncate font-display text-xl text-ink">{name}</h2>
         <p className="text-sm text-ink-muted">
           {sheet && classes
             ? t("characters.levelClass", { level: sheet.level, classes })
@@ -113,7 +111,7 @@ function CharacterCard({ record }: { record: CharacterRecord }) {
         </p>
         {sheet?.play && sheet.max_hp && (
           <div className="flex items-center gap-2 text-sm">
-            <Icon name="heart" size={15} className="text-blood" />
+            <Icon name="heart" size={15} className="text-red" />
             <span className="tabular-nums">
               {sheet.play.hp.current} / {sheet.play.hp.max}
             </span>
@@ -130,7 +128,7 @@ function CharacterCard({ record }: { record: CharacterRecord }) {
             to="/characters/$id/sheet"
             params={{ id: record.id }}
             search={{}}
-            className="plaque plaque-sm"
+            className="btn btn-sm"
           >
             <Icon name="sheet" size={16} />
             {t("characters.sheet")}
@@ -139,7 +137,7 @@ function CharacterCard({ record }: { record: CharacterRecord }) {
             to="/characters/$id/build"
             params={{ id: record.id }}
             search={{}}
-            className="plaque plaque-sm"
+            className="btn btn-sm"
           >
             <Icon name="edit" size={16} />
             {t("characters.build")}

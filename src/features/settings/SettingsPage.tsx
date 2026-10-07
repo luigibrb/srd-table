@@ -67,13 +67,13 @@ export function SettingsPage() {
         </div>
         <Reasons reasons={error} className="mt-2" />
         <div className="mt-3 flex flex-wrap items-center gap-3">
-          <Button variant="gold" icon="check" onClick={() => void applyContent()}>
+          <Button variant="primary" icon="check" onClick={() => void applyContent()}>
             {t("settings.applyContent")}
           </Button>
           <span className="text-sm text-ink-muted">
             {t("settings.loadedPacks")}:{" "}
             {packs.error ? (
-              <span className="text-blood">{packs.error.message}</span>
+              <span className="text-red">{packs.error.message}</span>
             ) : (
               (packs.data ?? []).map((p) => `${p.id}${p.version ? ` ${p.version}` : ""}`).join(", ")
             )}
@@ -111,7 +111,7 @@ export function SettingsPage() {
 
       <Section title={t("settings.theme")}>
         <div className="flex gap-1">
-          {(["night", "parchment"] as const satisfies readonly Theme[]).map((theme) => (
+          {(["system", "mat", "felt"] as const satisfies readonly Theme[]).map((theme) => (
             <Button
               key={theme}
               on={settings.theme === theme}

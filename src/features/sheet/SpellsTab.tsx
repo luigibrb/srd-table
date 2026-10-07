@@ -27,7 +27,7 @@ export function SpellsTab({ id, sheet }: { id: string; sheet: PlaySheet }) {
         <Section title={t("sheet.spellcasting")}>
           <ul className="grid gap-2 sm:grid-cols-2">
             {sheet.spellcasting.map((sc) => (
-              <li key={sc.source} className="rounded border border-line px-3 py-2">
+              <li key={sc.source} className="rounded border border-edge px-3 py-2">
                 <div className="font-semibold">{sc.source}</div>
                 <div className="text-sm text-ink-muted">
                   {sc.ability ? abilityName(sc.ability) : "—"}
@@ -96,18 +96,18 @@ export function SpellsTab({ id, sheet }: { id: string; sheet: PlaySheet }) {
                   return (
                     <li
                       key={`${s.id}|${s.source}`}
-                      className="flex items-center gap-2 rounded border border-line px-2 py-1.5"
+                      className="flex items-center gap-2 rounded border border-edge px-2 py-1.5"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-baseline gap-x-2">
                           <span className="font-semibold">{s.name}</span>
                           {def?.concentration && (
-                            <span className="text-[13px] text-violet">
+                            <span className="text-[13px] text-purple">
                               {t("sheet.concentrationTag")}
                             </span>
                           )}
                           {def?.ritual && (
-                            <span className="text-[13px] text-gold">{t("sheet.ritual")}</span>
+                            <span className="text-[13px] text-purple">{t("sheet.ritual")}</span>
                           )}
                         </div>
                         <div className="text-[13px] text-ink-muted">

@@ -43,12 +43,10 @@ function DiceCard({ item }: { item: DiceShown }) {
     return () => clearTimeout(timer);
   }, [dismiss, item.id]);
   return (
-    <div className="panel rise-in pointer-events-auto border-gold/60 p-3 shadow-panel">
+    <div className="panel rise-in pointer-events-auto border-edge-strong p-3 shadow-panel">
       <div className="mb-1 flex items-center gap-2">
-        <Icon name="d20" size={18} className="text-gold" />
-        <span className="flex-1 font-display text-lg font-semibold text-gold">
-          {item.who || t("dice.roll")}
-        </span>
+        <Icon name="d20" size={18} className="text-ink-muted" />
+        <span className="flex-1 font-display text-lg text-ink">{item.who || t("dice.roll")}</span>
         <Button
           variant="ghost"
           icon="x"
@@ -107,8 +105,8 @@ function Line({
             className={cx(
               "inline-flex h-6 min-w-6 items-center justify-center rounded border px-1 tabular-nums",
               kept !== undefined && dice.length > 1 && d !== kept
-                ? "border-line text-ink-faint line-through"
-                : "border-gold/70 text-ink",
+                ? "border-edge text-ink-faint line-through"
+                : "border-ink bg-card text-ink",
             )}
           >
             {d}
@@ -118,7 +116,7 @@ function Line({
       {modifier !== undefined && modifier !== 0 && (
         <span className="tabular-nums text-ink-muted">{signed(modifier)}</span>
       )}
-      <span className="font-display text-2xl leading-none font-bold tabular-nums text-gold-hi">
+      <span className="font-display text-2xl leading-none font-bold tabular-nums text-ink">
         = {total}
       </span>
       {outcome && (
@@ -126,7 +124,7 @@ function Line({
           className={cx(
             "w-full text-right font-semibold",
             tone === "good" && "text-green",
-            tone === "bad" && "text-blood",
+            tone === "bad" && "text-red",
           )}
         >
           {outcome}

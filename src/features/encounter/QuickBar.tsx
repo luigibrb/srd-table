@@ -1,8 +1,10 @@
 /**
  * What the acting combatant can do now (`combatantOptions`), as tiles grouped by what they cost:
  * Action, Bonus Action, Reaction, Free, Legendary, plus favourites. Every option the engine lists
- * is shown; one it wouldn't take now is greyed out with its reason. A tile with nothing to fill in
- * is sent at once; the others open the composer.
+ * is shown; one it wouldn't take now is outlined dashed with its reason. A tile with nothing to fill in
+ * is sent at once; the others open the composer. Attacks that follow an earlier one (Cleave after a
+ * hit, the Light extra attack, attacks a feature granted) show in the Action tab too, where the
+ * attack that opened them was. On the combatant's turn, End turn sends `next_turn`.
  */
 
 import { useState } from "react";
@@ -75,6 +77,16 @@ export function favoriteKey(action: EncounterAction): string {
   return `${action.type}:${String(what)}${variant ? `:${variant}` : ""}`;
 }
 
+/** An attack another one opened this turn: shown with the Action tab's attacks too. */
+function followsUp(tile: Tile): boolean {
+  const a = tile.entry.action as Record<string, unknown>;
+  return a.cleave === true || a.light_extra === true || a.granted === true;
+}
+
+function inGroup(tile: Tile, group: Group): boolean {
+  return GROUP_OF[tile.entry.cost] === group || (group === "action" && followsUp(tile));
+}
+
 export function tilesOf(options: CombatantOptions): Tile[] {
   return KINDS.flatMap((kind) =>
     options[kind].map((entry, i) => ({
@@ -105,9 +117,7 @@ export function QuickBar({
   const tiles = tilesOf(options);
   const groups: Group[] = ["favorites", "action", "bonus_action", "reaction", "free", "legendary"];
   const present = groups.filter((g) =>
-    g === "favorites"
-      ? favorites.length > 0
-      : tiles.some((tile) => GROUP_OF[tile.entry.cost] === g),
+    g === "favorites" ? favorites.length > 0 : tiles.some((tile) => inGroup(tile, g)),
   );
   const [group, setGroup] = useState<Group>(present[0] ?? "action");
   const active = present.includes(group) ? group : (present[0] ?? "action");
@@ -115,13 +125,19 @@ export function QuickBar({
   const shown = tiles.filter((tile) =>
     active === "favorites"
       ? favorites.includes(favoriteKey(tile.entry.action))
-      : GROUP_OF[tile.entry.cost] === active,
+      : inGroup(tile, active),
   );
 
   async function use(tile: Tile) {
     setReasons(null);
     if (needsComposer(tile.entry)) return onCompose(tile.entry);
     const result = await send(encounterId, tile.entry.action);
+    if (!result.ok) setReasons(result.reasons);
+  }
+
+  async function endTurn() {
+    setReasons(null);
+    const result = await send(encounterId, { type: "next_turn" });
     if (!result.ok) setReasons(result.reasons);
   }
 
@@ -136,13 +152,11 @@ export function QuickBar({
               type="button"
               role="tab"
               aria-selected={active === g}
+              data-on={active === g ? "true" : undefined}
               onClick={() => setGroup(g)}
-              className={cx(
-                "plaque plaque-sm",
-                active === g && "border-gold bg-plaque-lit text-gold-hi",
-              )}
+              className="btn btn-sm"
             >
-              {g === "favorites" ? "★ " : ""}
+              <span className="pip" data-cost={g} aria-hidden="true" />
               {t(`table.group.${g}`)}
             </button>
           ))}
@@ -151,16 +165,21 @@ export function QuickBar({
           className="ml-auto flex flex-wrap items-center gap-2 text-[13px] text-ink-muted"
           aria-label={t("table.economy")}
         >
-          <Economy label={t("table.action")} on={economy.action} />
-          <Economy label={t("table.bonusAction")} on={economy.bonus_action} />
-          <Economy label={t("table.reaction")} on={economy.reaction} />
+          <Economy cost="action" label={t("table.action")} on={economy.action} />
+          <Economy cost="bonus_action" label={t("table.bonusAction")} on={economy.bonus_action} />
+          <Economy cost="reaction" label={t("table.reaction")} on={economy.reaction} />
           <span>{t("table.movement", { feet: economy.movement })}</span>
           {economy.attacks_left > 0 && <span>{tn("table.attacksLeft", economy.attacks_left)}</span>}
           {economy.legendary && <span>{t("table.legendaryLeft", economy.legendary)}</span>}
         </section>
+        {options.turn && (
+          <Button size="sm" variant="primary" icon="next" onClick={() => void endTurn()}>
+            {t("table.endTurn")}
+          </Button>
+        )}
       </div>
       <Reasons reasons={reasons} className="mb-2" />
-      <ul role="tabpanel" className="flex gap-1.5 overflow-x-auto pb-1">
+      <ul role="tabpanel" className="flex items-start gap-1.5 overflow-x-auto pb-1">
         {shown.map((tile) => {
           const fav = favorites.includes(favoriteKey(tile.entry.action));
           return (
@@ -185,7 +204,7 @@ export function QuickBar({
                 variant="ghost"
                 className={cx(
                   "!absolute top-0 right-0 !p-0.5 text-[13px]",
-                  fav ? "text-gold" : "text-ink-faint",
+                  fav ? "text-ink" : "text-ink-faint",
                 )}
                 aria-pressed={fav}
                 label={fav ? t("table.removeFavorite") : t("table.addFavorite")}
@@ -201,15 +220,12 @@ export function QuickBar({
   );
 }
 
-function Economy({ label, on }: { label: string; on: boolean }) {
+function Economy({ cost, label, on }: { cost: Group; label: string; on: boolean }) {
   return (
     <span
       className={cx("flex items-center gap-1", on ? "text-ink" : "text-ink-faint line-through")}
     >
-      <span
-        className={cx("h-2 w-2 rotate-45", on ? "bg-gold" : "border border-line-strong")}
-        aria-hidden="true"
-      />
+      <span className="pip" data-cost={cost} aria-hidden="true" />
       {label}
     </span>
   );

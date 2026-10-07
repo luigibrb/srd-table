@@ -87,6 +87,7 @@ import {
   type Step,
   seededRng,
   skillName,
+  startingEquipment,
   type TableName,
   type ValidationReport,
   validateState,
@@ -97,6 +98,9 @@ import { ContentLoader, type ContentSettings, type FetchPackFile } from "./conte
 // --- results ------------------------------------------------------------------------------
 
 /** A refused setter or action: the document is unchanged; `reasons` are the engine's words. */
+/** The build's starting equipment and gold (`startingEquipment`). */
+export type StartingEquipment = ReturnType<typeof startingEquipment>;
+
 export interface Refusal {
   readonly ok: false;
   readonly reasons: readonly string[];
@@ -359,6 +363,8 @@ export interface EngineFacade {
 
   // play
   createState(build: CharacterBuild): Promise<CharacterState>;
+  /** What `take_starting_equipment` adds: the build's starting equipment and gold. */
+  startingEquipment(build: CharacterBuild): Promise<StartingEquipment>;
   playSheet(build: CharacterBuild, state: CharacterState): Promise<PlayView>;
   /** One action or a list, in order; all or nothing. */
   applyPlayAction(
@@ -471,6 +477,8 @@ export function createInProcessFacade(options: FacadeOptions): EngineFacade {
     rollAbilityScores: async () => rollAbilityScores(rng),
 
     createState: (build) => content.run("play", (catalog) => createState(build, catalog)),
+    startingEquipment: (build) =>
+      content.run("play", (catalog) => startingEquipment(build, catalog)),
     playSheet: (build, state) =>
       content.run("play", (catalog) => ({
         sheet: computePlaySheet(build, state, catalog),

@@ -46,7 +46,7 @@ export function Summary({ view }: { view: BuildView }) {
       </div>
       <dl className="mt-3 grid grid-cols-6 gap-1 text-center">
         {abilities().map((a) => (
-          <div key={a} className="rounded border border-line bg-panel-2 py-1">
+          <div key={a} className="rounded border border-edge bg-card-2 py-1">
             <dt className="text-[13px] text-ink-muted uppercase" title={abilityName(a)}>
               {a}
             </dt>
@@ -63,7 +63,7 @@ export function Summary({ view }: { view: BuildView }) {
           ` · ${sheet.classes.map((c) => `${c.name} ${c.level}${c.subclass ? ` (${c.subclass})` : ""}`).join(" / ")}`}
       </p>
       {sheet.warnings.length > 0 && (
-        <ul className="mt-2 space-y-0.5 text-sm text-gold">
+        <ul className="mt-2 space-y-0.5 text-sm text-orange">
           {sheet.warnings.map((w) => (
             <li key={w}>{w}</li>
           ))}

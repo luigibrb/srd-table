@@ -289,19 +289,19 @@ export function ActionComposer({
     <section
       data-composer
       aria-label={entry.label}
-      className="panel rise-in max-h-[60vh] overflow-y-auto border-gold/60 p-3 shadow-panel"
+      className="panel rise-in max-h-[60vh] overflow-y-auto border-ink p-3 shadow-panel"
       onKeyDown={(e) => {
         if (e.key === "Escape") onClose();
       }}
     >
       <header className="mb-3 flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <h3 className="font-display text-xl font-semibold text-gold">{entry.label}</h3>
+          <h3 className="font-display text-xl text-ink">{entry.label}</h3>
           <p className="text-sm text-ink-muted">
             {entry.note ?? `${actor?.name ?? ""} · ${t(`table.cost.${entry.cost}`)}`}
           </p>
           {odds && (
-            <p className="text-sm text-gold">
+            <p className="text-sm font-bold text-ink">
               {entry.odds && `${name(entry.odds.target)}: `}
               {odds}
             </p>
@@ -333,7 +333,7 @@ export function ActionComposer({
                         type="button"
                         aria-pressed={times > 0}
                         onClick={() => toggleTarget(id)}
-                        className={cx("plaque w-full !justify-start", !inRange && "opacity-60")}
+                        className={cx("btn w-full !justify-start", !inRange && "opacity-60")}
                         data-on={times > 0 ? "true" : undefined}
                       >
                         <Icon name={times > 0 ? "target" : "user"} size={16} />
@@ -488,7 +488,7 @@ export function ActionComposer({
               <label key={r.id} className="flex items-center gap-2">
                 <input
                   type="checkbox"
-                  className="accent-[var(--gold)]"
+                  className="accent-[var(--blue)]"
                   checked={riders.includes(r.id)}
                   onChange={(e) =>
                     setRiders(
@@ -504,7 +504,7 @@ export function ActionComposer({
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
-                  className="accent-[var(--gold)]"
+                  className="accent-[var(--blue)]"
                   checked={twoHanded}
                   onChange={(e) => setTwoHanded(e.target.checked)}
                 />
@@ -636,7 +636,7 @@ export function ActionComposer({
       <footer className="mt-3 flex justify-end gap-2">
         <Button onClick={onClose}>{t("common.cancel")}</Button>
         <Button
-          variant="gold"
+          variant="primary"
           icon="d20"
           disabled={busy || check.data?.ok === false}
           onClick={() => void go()}

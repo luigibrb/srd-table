@@ -68,7 +68,7 @@ function Table({ html }: { html: string }) {
               {head.cells.map((c, i) => (
                 <th
                   key={i}
-                  className="border-b border-line-strong px-2 py-1 text-left font-semibold text-gold"
+                  className="border-b border-edge-strong px-2 py-1 text-left font-bold text-ink"
                 >
                   {inline(c)}
                 </th>
@@ -78,7 +78,7 @@ function Table({ html }: { html: string }) {
         )}
         <tbody>
           {body.map((row, r) => (
-            <tr key={r} className="border-b border-line">
+            <tr key={r} className="border-b border-edge">
               {row.cells.map((c, i) => (
                 <td key={i} className="px-2 py-1 align-top">
                   {inline(c)}

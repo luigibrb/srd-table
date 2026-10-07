@@ -14,7 +14,7 @@ import type { CombatantView, EncounterView } from "@/engine/facade";
 import { t } from "@/i18n";
 import { useDistance, useMovePreview, useReachable } from "@/queries";
 import { useDocuments } from "@/store/documents";
-import { type MapTool, useTableUi } from "../encounter/tableUi";
+import { alliedSides, type MapTool, useTableUi } from "../encounter/tableUi";
 
 const CELL = 44;
 const MIN_W = 24;
@@ -168,6 +168,7 @@ export function BattleMap({
 
   const highlight = useMemo(() => ui.highlight.map(parse), [ui.highlight]);
   const candidates = new Set(ui.candidates);
+  const allies = alliedSides(view);
   const difficult = encounter.map.difficult;
   const blocked = encounter.map.blocked;
 
@@ -215,7 +216,7 @@ export function BattleMap({
   return (
     <section
       aria-label={t("map.title")}
-      className="relative flex h-full min-h-[18rem] flex-col overflow-hidden rounded-lg border border-line bg-[#0b0f17]"
+      className="relative flex h-full min-h-[18rem] flex-col overflow-hidden rounded border border-edge bg-mat"
     >
       <div
         className="absolute top-2 left-2 z-10 flex flex-col gap-1"
@@ -263,10 +264,10 @@ export function BattleMap({
       {(hint || reasons || distance.data !== undefined) && (
         <div className="pointer-events-none absolute top-2 left-14 z-10 max-w-[70%] space-y-1">
           {hint && (
-            <div className="rounded bg-panel/90 px-2 py-1 text-[13px] text-ink-muted">{hint}</div>
+            <div className="rounded bg-card/90 px-2 py-1 text-[13px] text-ink-muted">{hint}</div>
           )}
           {ui.tool === "measure" && measure.to && distance.data !== undefined && (
-            <div className="rounded bg-panel/90 px-2 py-1 font-semibold text-gold">
+            <div className="rounded bg-card/90 px-2 py-1 font-bold text-ink">
               {t("map.distance", { feet: distance.data })}
             </div>
           )}
@@ -309,7 +310,7 @@ export function BattleMap({
               <path
                 d={`M ${CELL} 0 L 0 0 0 ${CELL}`}
                 fill="none"
-                stroke="#1d2636"
+                className="stroke-grid"
                 strokeWidth={1}
               />
             </pattern>
@@ -320,7 +321,15 @@ export function BattleMap({
               patternUnits="userSpaceOnUse"
               patternTransform="rotate(45)"
             >
-              <line x1={0} y1={0} x2={0} y2={8} stroke="#8a6a3a" strokeWidth={2} opacity={0.55} />
+              <line
+                x1={0}
+                y1={0}
+                x2={0}
+                y2={8}
+                className="stroke-ink-faint"
+                strokeWidth={2}
+                opacity={0.6}
+              />
             </pattern>
           </defs>
           <rect
@@ -348,8 +357,7 @@ export function BattleMap({
               y={sq.y * CELL}
               width={CELL}
               height={CELL}
-              fill="#03050a"
-              stroke="#2a2416"
+              className="fill-ink/80 stroke-ink"
             />
           ))}
 
@@ -362,8 +370,11 @@ export function BattleMap({
                   y={sq.y * CELL}
                   width={CELL}
                   height={CELL}
-                  fill={z.difficult ? "rgb(140 124 255 / 0.22)" : "rgb(140 124 255 / 0.16)"}
-                  stroke="rgb(140 124 255 / 0.45)"
+                  className={
+                    z.difficult
+                      ? "fill-purple/25 stroke-purple/60"
+                      : "fill-purple/15 stroke-purple/60"
+                  }
                   strokeWidth={1}
                 />
               ))}
@@ -374,7 +385,7 @@ export function BattleMap({
                   y1={seg.from.y * CELL}
                   x2={seg.to.x * CELL}
                   y2={seg.to.y * CELL}
-                  stroke="#b9b0ff"
+                  className="stroke-purple"
                   strokeWidth={6}
                   strokeLinecap="round"
                 />
@@ -383,8 +394,9 @@ export function BattleMap({
                 <text
                   x={parse(z.squares[0]).x * CELL + 4}
                   y={parse(z.squares[0]).y * CELL + 14}
-                  fill="#b9b0ff"
-                  fontSize={12}
+                  className="fill-purple"
+                  fontSize={13}
+                  fontWeight={700}
                 >
                   {z.label}
                 </text>
@@ -399,8 +411,7 @@ export function BattleMap({
               y={sq.y * CELL}
               width={CELL}
               height={CELL}
-              fill={ui.aiming ? "rgb(192 69 58 / 0.32)" : "rgb(201 162 74 / 0.07)"}
-              stroke={ui.aiming ? "rgb(192 69 58 / 0.6)" : "none"}
+              className={ui.aiming ? "fill-red/20 stroke-red" : "fill-blue/10 stroke-none"}
             />
           ))}
 
@@ -414,8 +425,7 @@ export function BattleMap({
                   y={sq.y * CELL}
                   width={CELL}
                   height={CELL}
-                  fill="rgb(111 168 78 / 0.12)"
-                  stroke="rgb(111 168 78 / 0.35)"
+                  className="fill-green/15 stroke-green/50"
                   pointerEvents="none"
                 />
               );
@@ -429,7 +439,7 @@ export function BattleMap({
                   .map((p) => `${(p.x + 0.5) * CELL},${(p.y + 0.5) * CELL}`)
                   .join(" ")}
                 fill="none"
-                stroke={movePreview.data.ok ? "#6fa84e" : "#c0453a"}
+                className={movePreview.data.ok ? "stroke-green" : "stroke-red"}
                 strokeWidth={3}
                 strokeDasharray="6 4"
                 pointerEvents="none"
@@ -443,7 +453,7 @@ export function BattleMap({
               width={CELL}
               height={CELL}
               fill="none"
-              stroke="#e2c375"
+              className="stroke-ink"
               strokeWidth={2}
               strokeDasharray="4 3"
             />
@@ -456,10 +466,9 @@ export function BattleMap({
               y1={w.from.y * CELL}
               x2={w.to.x * CELL}
               y2={w.to.y * CELL}
-              stroke="#c9a24a"
               strokeWidth={6}
               strokeLinecap="round"
-              className={gm && ui.tool === "walls" ? "cursor-pointer" : undefined}
+              className={cx("stroke-ink", gm && ui.tool === "walls" && "cursor-pointer")}
               onPointerDown={(e) => {
                 if (gm && ui.tool === "walls") {
                   e.stopPropagation();
@@ -470,7 +479,12 @@ export function BattleMap({
             />
           ))}
           {wallStart && (
-            <circle cx={wallStart.x * CELL} cy={wallStart.y * CELL} r={6} fill="#e2c375" />
+            <circle
+              cx={wallStart.x * CELL}
+              cy={wallStart.y * CELL}
+              r={6}
+              className="fill-hl stroke-ink"
+            />
           )}
 
           {measure.from && (
@@ -490,6 +504,7 @@ export function BattleMap({
                 current={view.current === c.id}
                 selected={ui.selected === c.id}
                 candidate={candidates.has(c.id)}
+                allied={allies.has(c.side)}
                 onActivate={() => {
                   // Aiming at a creature aims at its square.
                   if (ui.aiming && c.position) ui.aiming.onPick(c.position);
@@ -510,7 +525,7 @@ export function BattleMap({
                 cy={(ui.ping.y + 0.5) * CELL}
                 r={CELL * 0.8}
                 fill="none"
-                stroke="#e2c375"
+                className="stroke-ink"
                 strokeWidth={3}
               >
                 <animate
@@ -549,12 +564,20 @@ function MeasureLine({
         y1={c(from.y)}
         x2={c(to.x)}
         y2={c(to.y)}
-        stroke="#e2c375"
+        className="stroke-ink"
         strokeWidth={3}
         strokeDasharray="8 5"
       />
       {feet !== undefined && (
-        <text x={c(to.x) + 10} y={c(to.y) - 10} fill="#e2c375" fontSize={16} fontWeight={700}>
+        <text
+          x={c(to.x) + 10}
+          y={c(to.y) - 10}
+          className="fill-ink stroke-card"
+          strokeWidth={4}
+          paintOrder="stroke"
+          fontSize={16}
+          fontWeight={700}
+        >
           {feet} ft
         </text>
       )}
@@ -567,12 +590,15 @@ function Token({
   current,
   selected,
   candidate,
+  allied,
   onActivate,
 }: {
   c: CombatantView;
   current: boolean;
   selected: boolean;
   candidate: boolean;
+  /** On one of the party's sides: a blue rim, red otherwise. */
+  allied: boolean;
   onActivate: () => void;
 }) {
   if (!c.position) return null;
@@ -580,7 +606,6 @@ function Token({
   const x = c.position.x * CELL;
   const y = c.position.y * CELL;
   const r = size / 2 - 4;
-  const party = c.character !== null;
   const down = c.defeated || c.dead;
   const initials = c.name
     .split(/\s+/)
@@ -607,26 +632,38 @@ function Token({
           onActivate();
         }
       }}
-      className="cursor-pointer outline-none [&:focus-visible>circle:first-child]:stroke-[#e2c375]"
+      className="cursor-pointer outline-none [&:focus-visible>circle:first-child]:stroke-focus"
       opacity={down ? 0.45 : 1}
     >
-      {current && (
-        <circle cx={x + size / 2} cy={y + size / 2} r={r + 6} fill="rgb(201 162 74 / 0.25)" />
-      )}
       <circle
         cx={x + size / 2}
         cy={y + size / 2}
-        r={r}
-        fill={party ? "#1d3a2a" : "#3a1d1d"}
-        stroke={selected ? "#e2c375" : candidate ? "#c0453a" : party ? "#6fa84e" : "#a33"}
-        strokeWidth={selected || candidate ? 3.5 : 2}
+        r={r + 3}
+        fill="none"
+        className={
+          selected
+            ? "stroke-blue"
+            : candidate
+              ? "stroke-red"
+              : current
+                ? "stroke-hl"
+                : "stroke-none"
+        }
+        strokeWidth={current && !selected && !candidate ? 5 : 2.5}
         strokeDasharray={candidate && !selected ? "5 3" : undefined}
+      />
+      <circle
+        cx={x + size / 2}
+        cy={y + size / 2}
+        r={r - 1}
+        className={cx("fill-card", allied ? "stroke-blue" : "stroke-red")}
+        strokeWidth={3.5}
       />
       <text
         x={x + size / 2}
         y={y + size / 2 + 5}
         textAnchor="middle"
-        fill="#e8e3d6"
+        className="fill-ink"
         fontSize={Math.max(12, r * 0.7)}
         fontWeight={700}
         pointerEvents="none"
@@ -638,8 +675,8 @@ function Token({
           x={x + size - 8}
           y={y + 12}
           textAnchor="end"
-          fill="#e2c375"
-          fontSize={11}
+          className="fill-ink"
+          fontSize={13}
           fontWeight={700}
           pointerEvents="none"
         >
@@ -647,7 +684,15 @@ function Token({
         </text>
       )}
       {c.conditions.length > 0 && (
-        <circle cx={x + 8} cy={y + 8} r={5} fill="#c0453a" pointerEvents="none" />
+        <circle
+          cx={x + 8}
+          cy={y + 8}
+          r={5}
+          fill="none"
+          className="stroke-orange"
+          strokeWidth={3}
+          pointerEvents="none"
+        />
       )}
       {down && (
         <g pointerEvents="none">
@@ -656,7 +701,7 @@ function Token({
             y1={y + 8}
             x2={x + size - 8}
             y2={y + size - 8}
-            stroke="#c0453a"
+            className="stroke-red"
             strokeWidth={3}
           />
           <line
@@ -664,7 +709,7 @@ function Token({
             y1={y + 8}
             x2={x + 8}
             y2={y + size - 8}
-            stroke="#c0453a"
+            className="stroke-red"
             strokeWidth={3}
           />
         </g>
@@ -681,7 +726,7 @@ function UnplacedTokens({ view }: { view: EncounterView }) {
   const unplaced = view.combatants.filter((c) => !c.position);
   if (!unplaced.length) return null;
   return (
-    <div className="flex flex-wrap items-center gap-1 border-t border-line bg-panel/80 px-2 py-1">
+    <div className="flex flex-wrap items-center gap-1 border-t border-edge bg-card/80 px-2 py-1">
       <span className="text-[13px] text-ink-muted">{t("table.unpositioned")}:</span>
       {unplaced.map((c) => (
         <Button key={c.id} size="sm" on={selected === c.id} onClick={() => select(c.id)}>

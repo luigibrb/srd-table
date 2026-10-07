@@ -4,6 +4,7 @@ import type { Encounter } from "srd-rules-engine";
 import { beforeEach, describe, expect, it } from "vitest";
 import { setEngine } from "../../src/engine/client";
 import { nodeFacade } from "../../src/engine/node";
+import { useTableUi } from "../../src/features/encounter/tableUi";
 import { newId, useDocuments } from "../../src/store/documents";
 import { useUi } from "../../src/store/ui";
 import { fighter } from "../fixtures/characters";
@@ -113,5 +114,31 @@ describe("encounter table", () => {
     const rail = await screen.findByRole("navigation", { name: "Initiative" }, { timeout: 15_000 });
     expect(rail).toHaveTextContent("Goblin Warrior");
     expect(rail).not.toHaveTextContent("10/10");
+  });
+
+  it("warns when the acting combatant is off a map in use, places it, and ends the turn", async () => {
+    const r = await engine.applyEncounterAction(await engine.newEncounter(), {}, [
+      { type: "add_monster", monster: "goblin-warrior" },
+      { type: "add_monster", monster: "zombie" },
+      { type: "place", id: "goblin-warrior", x: 2, y: 2 },
+      { type: "set_initiative", id: "zombie", value: 20 },
+      { type: "set_initiative", id: "goblin-warrior", value: 5 },
+      { type: "start" },
+    ]);
+    if (!r.ok) throw new Error(r.reasons.join("; "));
+    const id = storeEncounter(r.encounter);
+    await renderApp(`/encounters/${id}`);
+
+    const notice = await screen.findByText(/Zombie isn't on the map/, {}, { timeout: 15_000 });
+    await userEvent.click(
+      within(notice.closest("[role=status]") as HTMLElement).getByRole("button", {
+        name: "Place Zombie",
+      }),
+    );
+    expect(useTableUi.getState()).toMatchObject({ selected: "zombie", tool: "place" });
+
+    const options = await screen.findByRole("region", { name: "Options" });
+    await userEvent.click(within(options).getByRole("button", { name: "End turn" }));
+    await waitFor(() => expect(useDocuments.getState().encounters[id]?.encounter.turn).toBe(1));
   });
 });

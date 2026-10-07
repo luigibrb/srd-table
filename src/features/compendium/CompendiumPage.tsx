@@ -53,8 +53,8 @@ export function CompendiumPage({ search }: { search: CompendiumSearch }) {
                 aria-current={name === table ? "page" : undefined}
                 onClick={() => go({ table: name })}
                 className={cx(
-                  "w-full rounded px-2 py-1.5 text-left whitespace-nowrap hover:bg-panel-2",
-                  name === table && "bg-plaque-lit text-gold-hi",
+                  "w-full rounded px-2 py-1.5 text-left whitespace-nowrap hover:bg-card-2",
+                  name === table && "bg-hl text-hl-ink",
                 )}
               >
                 {t(`compendium.table.${name}` as const)}
@@ -69,7 +69,7 @@ export function CompendiumPage({ search }: { search: CompendiumSearch }) {
         className={cx("panel flex min-h-0 flex-col p-2", entry && "hidden md:flex")}
       >
         <label className="mb-2 flex items-center gap-2">
-          <Icon name="search" className="text-bronze" />
+          <Icon name="search" className="text-ink-muted" />
           <span className="sr-only">{t("compendium.search", { table: label })}</span>
           <input
             className="field"
@@ -103,8 +103,8 @@ export function CompendiumPage({ search }: { search: CompendiumSearch }) {
                 aria-current={e.id === search.id ? "true" : undefined}
                 onClick={() => go({ table, id: e.id, ...(query ? { q: query } : {}) })}
                 className={cx(
-                  "flex w-full items-baseline gap-2 border-b border-line/60 px-2 py-2 text-left hover:bg-panel-2",
-                  e.id === search.id && "bg-plaque-lit text-gold-hi",
+                  "flex w-full items-baseline gap-2 border-b border-edge/60 px-2 py-2 text-left hover:bg-card-2",
+                  e.id === search.id && "bg-hl text-hl-ink",
                 )}
               >
                 <span className="flex-1">{e.name}</span>
@@ -120,7 +120,7 @@ export function CompendiumPage({ search }: { search: CompendiumSearch }) {
           <>
             <button
               type="button"
-              className="mb-2 text-sm text-gold md:hidden"
+              className="mb-2 text-sm text-blue underline md:hidden"
               onClick={() => go({ table, ...(query ? { q: query } : {}) })}
             >
               ‹ {label}

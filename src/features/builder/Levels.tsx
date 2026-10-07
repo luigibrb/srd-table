@@ -59,7 +59,7 @@ export function LevelUpDialog({
             <Button icon="heart" onClick={() => void go("fixed")}>
               {t("builder.hpFixed", { hp: chosen.fixed_hp })}
             </Button>
-            <Button variant="gold" icon="d20" onClick={() => void go("roll")}>
+            <Button variant="primary" icon="d20" onClick={() => void go("roll")}>
               {t("builder.hpRoll", { die: chosen.hit_die })}
             </Button>
           </>
@@ -169,7 +169,7 @@ export function LevelPanel({
             {level.issues.map((i) => (
               <li
                 key={`${i.choice_key}|${i.message}`}
-                className={i.severity === "error" ? "text-blood" : "text-gold"}
+                className={i.severity === "error" ? "text-red" : "text-orange"}
               >
                 {i.message}
               </li>
@@ -232,7 +232,7 @@ export function RemoveLevelButton({
       >
         <Reasons reasons={reasons} />
         <p className="flex items-center gap-2 text-ink-muted">
-          <Icon name="warning" className="text-gold" />
+          <Icon name="warning" className="text-orange" />
           {t("builder.removeLevel", { level: view.level })}
         </p>
       </Dialog>

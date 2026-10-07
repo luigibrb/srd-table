@@ -73,3 +73,13 @@ export const useTableUi = create<TableUi>()((set) => ({
     set({ ping: square ? { ...square, at: Date.now() } : null });
   },
 }));
+
+/**
+ * Sides are colours: the sides the party's characters are on are drawn blue (allies), every
+ * other side red. Only a colour: who may target whom is the engine's.
+ */
+export function alliedSides(view: {
+  readonly combatants: readonly { readonly side: string; readonly character: string | null }[];
+}): ReadonlySet<string> {
+  return new Set(view.combatants.filter((c) => c.character !== null).map((c) => c.side));
+}

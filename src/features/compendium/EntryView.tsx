@@ -22,9 +22,7 @@ export function EntryView({ table, entry }: { table: TableName; entry: CatalogEn
   return (
     <div className="space-y-3">
       <header>
-        <h2 className="font-display text-3xl font-semibold text-gold [font-variant:small-caps]">
-          {entry.name}
-        </h2>
+        <h2 className="font-display text-3xl text-ink">{entry.name}</h2>
         <p className="text-[13px] text-ink-faint">
           {t("compendium.source", { source: entry.source })}
         </p>
@@ -185,7 +183,7 @@ function StatBlock({ monster: m }: { monster: MonsterDef }) {
     [t("compendium.f.legendaryActions"), m.legendary_actions],
   ];
   return (
-    <div className="space-y-3 rounded-lg border border-bronze/60 bg-panel-2 p-3">
+    <div className="space-y-3 rounded border border-edge-strong bg-card-2 p-3">
       <p className="italic text-ink-muted">
         {m.size} {m.creature_type}, {m.alignment}
       </p>
@@ -201,7 +199,7 @@ function StatBlock({ monster: m }: { monster: MonsterDef }) {
         <thead>
           <tr>
             {abilities().map((a) => (
-              <th key={a} className="font-semibold text-gold uppercase">
+              <th key={a} className="font-bold text-ink uppercase">
                 {a}
               </th>
             ))}

@@ -46,6 +46,18 @@ export function useBuildView(id: string) {
   });
 }
 
+/** What `take_starting_equipment` would add, asked only while it isn't taken (`enabled`). */
+export function useStartingEquipment(id: string, enabled: boolean) {
+  const content = useContentKey();
+  const rev = useRev(id);
+  const build = useDocuments((s) => s.characters[id]?.build);
+  return useQuery({
+    queryKey: ["starting-equipment", id, rev, content],
+    queryFn: () => engine().startingEquipment(build as NonNullable<typeof build>),
+    enabled: enabled && build !== undefined,
+  });
+}
+
 /** The play sheet (`computePlaySheet`) and the state's issues. */
 export function usePlayView(id: string | undefined) {
   const content = useContentKey();
