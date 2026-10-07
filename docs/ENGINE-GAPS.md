@@ -22,7 +22,6 @@ The app never works around a gap with rules of its own.
 
 | Id | What the app is missing | Engine status |
 |---|---|---|
-| R6 | Cunning / Brutal Strike on attack options | open |
 | R7 | Rest-change options as played | open |
 | R8 | Magic item bases | open |
 | R9 | Rolls for a character outside an encounter | open |
@@ -31,12 +30,6 @@ The app never works around a gap with rules of its own.
 | R12 | `unassignedValues` | open |
 | R13 | Translatable engine messages | open (large) |
 | R14 | Positions required when the map is in use (proposal) | open, low priority |
-
-### R6. Cunning / Brutal Strike
-
-- **Meanwhile.** The composer (`ActionComposer.tsx`) doesn't offer them.
-- **When done.** Checkboxes in the composer from the option's list, sent as `attack.cunning` /
-  `attack.brutal`.
 
 ### R7. Rest-change options as played
 
@@ -93,3 +86,4 @@ The app never works around a gap with rules of its own.
 | R3 | Bloodied | `d07df13` (main) | `HpBar` `bloodied` (red), "Bloodied" label on the rail and the sheet |
 | R4 | Creature space | `c8569e7` (main) | tokens drawn at their real size (`CombatantView.space` from the engine), reach and range from the whole space; the size letter is gone |
 | R5 | Zone squares | `c8569e7` (main) | `zoneSquaresOf` in the facade calls the engine's `zoneSquares` (an Emanation leaves out its caster's space, as the engine's saves do) |
+| R6 | Cunning / Brutal Strike | `b22a78e` (main) | "Strike effects" in the composer from `OptionEntry.strikes` (unavailable ones disabled with the engine's reason, not hidden), merged into the attack |

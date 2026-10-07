@@ -7,7 +7,7 @@ import { nodeFacade } from "../../src/engine/node";
 import { useTableUi } from "../../src/features/encounter/tableUi";
 import { newId, useDocuments } from "../../src/store/documents";
 import { useUi } from "../../src/store/ui";
-import { fighter } from "../fixtures/characters";
+import { fighter, rogue } from "../fixtures/characters";
 import { installTestEngine, renderApp, resetStores } from "../helpers/app";
 
 const engine = installTestEngine(13);
@@ -192,4 +192,47 @@ describe("encounter table", () => {
     expect(within(map).getByRole("button", { name: "Old well" })).toBeInTheDocument();
     expect(within(map).queryByRole("button", { name: /Secret door/ })).toBeNull();
   });
+
+  it("offers Cunning Strike effects on a Rogue's attack, with the engine's reasons", async () => {
+    const pip = await useDocuments.getState().importCharacter(await rogue(engine, 5));
+    if (!pip.ok) throw new Error(pip.reasons.join("; "));
+    const record = useDocuments.getState().characters[pip.id];
+    if (!record) throw new Error("import");
+    const party = { [pip.id]: { build: record.build, state: record.state } };
+    const r = await engine.applyEncounterAction(await engine.newEncounter(), party, [
+      { type: "add_character", character: pip.id },
+      { type: "add_monster", monster: "goblin-warrior" },
+      { type: "set_initiative", id: "pip", value: 20 },
+      { type: "set_initiative", id: "goblin-warrior", value: 5 },
+      { type: "start" },
+    ]);
+    if (!r.ok) throw new Error(r.reasons.join("; "));
+    const options = await engine.combatantOptions(r.encounter, party, "pip");
+    const attack = options.attacks.find((a) => a.strikes.length > 0);
+    if (!attack) throw new Error("no attack with Strike effects");
+    const id = storeEncounter(r.encounter);
+    await renderApp(`/encounters/${id}`);
+
+    const bar = await screen.findByRole("region", { name: "Options" }, { timeout: 15_000 });
+    // The first tile with that label (a thrown variant follows it).
+    const tile = within(bar).getAllByRole("button", {
+      name: new RegExp(`^${literal(attack.label)}`),
+    })[0];
+    if (!tile) throw new Error("no tile");
+    await userEvent.click(tile);
+    const composer = await screen.findByRole("group", { name: "Strike effects" });
+    for (const x of attack.strikes) {
+      const box = within(composer).getByRole("checkbox", { name: new RegExp(x.name) });
+      if (x.available) expect(box).toBeEnabled();
+      else {
+        expect(box).toBeDisabled();
+        expect(box).toHaveAccessibleDescription(x.reason ?? "");
+      }
+    }
+  });
 });
+
+/** A label as a literal pattern. */
+function literal(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}

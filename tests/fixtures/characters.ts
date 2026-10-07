@@ -1,6 +1,6 @@
 /**
  * Complete characters built through the facade (the engine's own setters), for tests and
- * screenshots: a level 3 Fighter (Champion) and a level 3 Wizard.
+ * screenshots: a level 3 Fighter (Champion), a level 3 Wizard, a level 5 Rogue.
  */
 
 import type { CharacterBuild } from "srd-rules-engine";
@@ -69,6 +69,25 @@ export async function wizard(engine: EngineFacade, level = 3): Promise<Character
   build = await fillLevel(engine, build, 1);
   for (let l = 2; l <= level; l++) {
     build = await apply(engine, build, [{ type: "level_up", class_id: "wizard", hp: null }]);
+    build = await fillLevel(engine, build, l);
+  }
+  return build;
+}
+
+export async function rogue(engine: EngineFacade, level = 5): Promise<CharacterBuild> {
+  let build = await apply(engine, await engine.newBuild(), [
+    { type: "class", id: "rogue" },
+    { type: "species", id: "halfling" },
+    { type: "background", id: "criminal" },
+    { type: "ability_method", method: "standard_array" },
+    { type: "base_scores", scores: { str: 8, dex: 15, con: 13, int: 12, wis: 14, cha: 10 } },
+    { type: "background_bonus", bonus: { dex: 2, con: 1 } },
+    { type: "name", name: "Pip" },
+    { type: "alignment", alignment: "CN" },
+  ]);
+  build = await fillLevel(engine, build, 1);
+  for (let l = 2; l <= level; l++) {
+    build = await apply(engine, build, [{ type: "level_up", class_id: "rogue", hp: null }]);
     build = await fillLevel(engine, build, l);
   }
   return build;

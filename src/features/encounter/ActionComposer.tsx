@@ -15,6 +15,7 @@ import type {
   OptionEntry,
   Skill,
   SpellDef,
+  StrikeOption,
 } from "srd-rules-engine";
 import { Icon } from "@/components/Icon";
 import { Button, cx, Reasons } from "@/components/ui";
@@ -101,6 +102,8 @@ export function ActionComposer({
   const [mode, setMode] = useState<Mode>("normal");
   const [cover, setCover] = useState<Cover | "">("");
   const [riders, setRiders] = useState<string[]>([]);
+  /** Cunning / Brutal Strike effects picked, as `send:id` keys. */
+  const [strikes, setStrikes] = useState<string[]>([]);
   const [twoHanded, setTwoHanded] = useState(false);
   const [damageType, setDamageType] = useState("");
   const [skill, setSkill] = useState(() =>
@@ -192,6 +195,7 @@ export function ActionComposer({
         mode,
         cover,
         riders,
+        strikes: entry.strikes.filter((x) => strikes.includes(`${x.send}:${x.id}`)),
         twoHanded,
         damageType,
         skill,
@@ -213,6 +217,8 @@ export function ActionComposer({
       mode,
       cover,
       riders,
+      strikes,
+      entry.strikes,
       twoHanded,
       damageType,
       skill,
@@ -514,6 +520,41 @@ export function ActionComposer({
           </fieldset>
         )}
 
+        {entry.strikes.length > 0 && (
+          <fieldset className="space-y-1">
+            <legend className="mb-1 text-sm text-ink-muted">{t("table.strikes")}</legend>
+            {entry.strikes.map((x) => {
+              const key = `${x.send}:${x.id}`;
+              const reasonId = `strike-${key}`;
+              return (
+                <div key={key}>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      className="accent-[var(--blue)]"
+                      disabled={!x.available}
+                      aria-describedby={x.available ? undefined : reasonId}
+                      checked={strikes.includes(key)}
+                      onChange={(e) =>
+                        setStrikes(
+                          e.target.checked ? [...strikes, key] : strikes.filter((k) => k !== key),
+                        )
+                      }
+                    />
+                    <span className={x.available ? "" : "text-ink-muted"}>{x.name}</span>
+                    <span className="text-sm text-ink-muted">{x.cost}</span>
+                  </label>
+                  {!x.available && x.reason && (
+                    <p id={reasonId} className="ml-6 text-[13px] text-ink-muted italic">
+                      {x.reason}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </fieldset>
+        )}
+
         {damageTypes.length > 0 && (
           <label className="flex flex-col gap-1 text-sm text-ink-muted">
             {t("table.damageType")}
@@ -692,6 +733,8 @@ interface Fields {
   mode: Mode;
   cover: Cover | "";
   riders: readonly string[];
+  /** Strike effects picked: each carries the engine's attack with that effect. */
+  strikes: readonly StrikeOption[];
   twoHanded: boolean;
   damageType: string;
   skill: string;
@@ -702,6 +745,34 @@ interface Fields {
   point: Square | null;
   wall: { from: Square; to: Square; side?: "left" | "right" } | null;
   unaffected: readonly string[];
+}
+
+/**
+ * The riders and Strike effects for an attack: the riders picked, and for each Strike effect
+ * what the engine's own action for it adds (its `cunning` / `brutal` entry, and the Sneak Attack
+ * rider a Cunning Strike needs), merged without duplicates.
+ */
+function withStrikes(
+  f: Fields,
+): Pick<Extract<EncounterAction, { type: "attack" }>, "riders" | "cunning" | "brutal"> {
+  const riders = new Map(f.riders.map((rider) => [rider, { rider }]));
+  const cunning = new Set<
+    NonNullable<Extract<EncounterAction, { type: "attack" }>["cunning"]>[number]
+  >();
+  const brutal = new Set<
+    NonNullable<Extract<EncounterAction, { type: "attack" }>["brutal"]>[number]
+  >();
+  for (const x of f.strikes) {
+    if (x.action.type !== "attack") continue;
+    for (const r of x.action.riders ?? []) riders.set(r.rider, r);
+    for (const c of x.action.cunning ?? []) cunning.add(c);
+    for (const b of x.action.brutal ?? []) brutal.add(b);
+  }
+  return {
+    ...(riders.size ? { riders: [...riders.values()] } : {}),
+    ...(cunning.size ? { cunning: [...cunning] } : {}),
+    ...(brutal.size ? { brutal: [...brutal] } : {}),
+  };
 }
 
 /** Fill the engine's action with what was chosen (fields the action type has, only). */
@@ -716,7 +787,7 @@ function compose(base: EncounterAction, f: Fields): EncounterAction {
         target: firstTarget,
         ...(f.mode !== "normal" ? { mode: f.mode } : {}),
         ...(f.cover ? { cover: f.cover } : {}),
-        ...(f.riders.length ? { riders: f.riders.map((rider) => ({ rider })) } : {}),
+        ...withStrikes(f),
         ...(f.twoHanded ? { two_handed: true } : {}),
       };
     case "cast": {
