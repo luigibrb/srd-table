@@ -242,12 +242,14 @@ docs/            # ARCHITECTURE.md (decisions), ENGINE-GAPS.md (what the UI need
 
 ## Engine dependency
 
-- While developing: `"srd-rules-engine": "file:../srd-rules-engine"` (a symlink to the sibling
-  repo). The app consumes its **built** `dist/` through the package `exports`: run
-  `npm run build` in the engine (or `npx tsdown --watch` there) after engine changes. Later: a
+- While developing: `"srd-rules-engine": "file:../srd-rules-engine-main"`, a symlink to a
+  `git worktree` of the engine detached at its `main` (the engine session works in
+  `../srd-rules-engine`, on its own branches, and never touches it). The app consumes its
+  **built** `dist/` through the package `exports`. `npm run engine:update` moves the worktree to
+  the engine's latest `main`, runs `npm ci`, builds `dist/` and copies the content. Later: a
   GitHub tag or npm version, pinned.
-- Vite: allow the sibling folder (`server.fs.allow`) and `resolve.dedupe: ["zod"]`, so the app
-  and the engine share one Zod.
+- Vite: allow that folder (`server.fs.allow`) and `resolve.dedupe: ["zod"]`, so the app and the
+  engine share one Zod.
 - Needs an engine with the options API (`combatantOptions`, `checkAction`) and the content
   split (`srd-rules-engine/srd` entry, per-table assets, `loadPack`, `createCatalog`'s
   `tables`).

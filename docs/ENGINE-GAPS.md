@@ -7,8 +7,8 @@ the engine delivers.
 **How engine work happens.** This repo's sessions never change engine code. A need is written
 as a requirement in the engine's `docs/REQUESTS.md` (git-ignored there, read by the engine's own
 Claude Code session), with an id `R<n>`; it's tracked here under the same id. When a request is
-`done`: rebuild the engine's `dist/` (`npx tsdown --config-loader tsx` in the engine),
-`npm run content`, wire the app, delete the fallback named here, move the entry to "Done" below.
+`done`: `npm run engine:update` (the engine's `main` into `../srd-rules-engine-main`, the
+worktree the app builds against: `npm ci`, `dist/`, content), wire the app, delete the fallback named here, move the entry to "Done" below.
 
 **How a delivery is noticed.** The engine session appends an entry to its `docs/RESPONSES.md`
 (commit, CHANGELOG entry, final API names, differences), puts `Request: R<n>` in the commit's

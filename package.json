@@ -9,6 +9,7 @@
   },
   "scripts": {
     "content": "tsx scripts/copy-content.ts",
+    "engine:update": "git -C ../srd-rules-engine-main checkout -q --detach main && (cd ../srd-rules-engine-main && npm ci --no-audit --no-fund && npx tsdown --config-loader tsx) && npm run content",
     "predev": "npm run content",
     "dev": "vite",
     "prebuild": "npm run content",
@@ -33,7 +34,7 @@
     "radix-ui": "^1.6.7",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "srd-rules-engine": "file:../srd-rules-engine",
+    "srd-rules-engine": "file:../srd-rules-engine-main",
     "zod": "^4.6.5",
     "zustand": "^5.0.15"
   },

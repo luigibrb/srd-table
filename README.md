@@ -24,11 +24,14 @@ Everything stays in the browser (IndexedDB); nothing is sent anywhere.
 
 ## Run it
 
-Needs Node 24 and the engine repo next to this one (`../srd-rules-engine`), built:
+Needs Node 24 and the engine repo next to this one (`../srd-rules-engine`). The app builds
+against a worktree of the engine's `main` (`../srd-rules-engine-main`), so work on the engine's
+branches doesn't reach it:
 
 ```bash
-(cd ../srd-rules-engine && npm install && npm run build)
+git -C ../srd-rules-engine worktree add --detach ../srd-rules-engine-main main
 npm install
+npm run engine:update   # the engine's main: install, build, copy the content
 npm run dev          # copy the SRD content, start Vite on http://localhost:5173
 ```
 
@@ -39,9 +42,9 @@ npm run dev          # copy the SRD content, start Vite on http://localhost:5173
 | `npm run e2e` | Playwright flows on the production build (`npx playwright install chromium` once) |
 | `npm run check` | Lint + typecheck + tests (CI) |
 | `npm run build` | Static build in `dist/` (any static host: hash routes) |
+| `npm run engine:update` | Move `../srd-rules-engine-main` to the engine's latest `main`, build it, copy the content |
 
-After changing the engine, rebuild it (`npm run build` there, or `npx tsdown --watch`); the app
-uses its `dist/`.
+After the engine's `main` moves, `npm run engine:update`; the app uses the worktree's `dist/`.
 
 ## How it's built
 

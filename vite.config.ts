@@ -3,7 +3,9 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
-const engineDir = fileURLToPath(new URL("../srd-rules-engine", import.meta.url));
+// The engine as the app builds against it: a detached worktree of the engine's main
+// (`../srd-rules-engine-main`), so the engine session's branches never reach the app.
+const engineDir = fileURLToPath(new URL("../srd-rules-engine-main", import.meta.url));
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -13,7 +15,7 @@ export default defineConfig({
     dedupe: ["zod"],
   },
   server: {
-    // The engine is a symlink to the sibling repo while developing.
+    // The engine is a symlink to that worktree.
     fs: { allow: [".", engineDir] },
   },
   worker: { format: "es" },
