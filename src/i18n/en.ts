@@ -410,6 +410,7 @@ export const en = {
   "table.hp": "{hp}/{max}",
   "table.dead": "Dead",
   "table.defeated": "Defeated",
+  "table.bloodied": "Bloodied",
   "table.dying": "Dying",
   "table.decisionsMode": "Decisions",
 

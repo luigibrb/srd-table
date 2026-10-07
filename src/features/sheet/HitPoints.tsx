@@ -41,7 +41,16 @@ export function HitPointsPanel({ id, sheet }: { id: string; sheet: PlaySheet }) 
             </span>
           )}
         </div>
-        <HpBar hp={play.hp.current} max={play.hp.max} temp={play.hp.temp} className="mt-1 mb-3" />
+        <HpBar
+          hp={play.hp.current}
+          max={play.hp.max}
+          temp={play.hp.temp}
+          bloodied={play.hp.bloodied}
+          className="mt-1 mb-3"
+        />
+        {play.hp.bloodied && !play.dying && !play.dead && (
+          <p className="mb-2 font-semibold text-red">{t("table.bloodied")}</p>
+        )}
         {(play.dying || play.stable || play.dead) && (
           <p className={cx("mb-2 font-semibold", play.dead ? "text-red" : "text-orange")}>
             {play.dead ? t("sheet.dead") : play.stable ? t("sheet.stable") : t("sheet.dying")}

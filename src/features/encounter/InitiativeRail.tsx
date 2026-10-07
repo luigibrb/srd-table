@@ -119,7 +119,18 @@ function RailEntry({
                 {c.armor_class}
               </span>
             </div>
-            {showHp && <HpBar hp={c.hp} max={c.max_hp} temp={c.temp_hp} className="my-1" />}
+            {showHp && (
+              <HpBar
+                hp={c.hp}
+                max={c.max_hp}
+                temp={c.temp_hp}
+                bloodied={c.bloodied}
+                className="my-1"
+              />
+            )}
+            {showHp && c.bloodied && !status && (
+              <div className="text-[13px] font-semibold text-red">{t("table.bloodied")}</div>
+            )}
             {status && showHp && <div className="text-[13px] font-semibold text-red">{status}</div>}
             {c.conditions.length > 0 && (
               <div className="mt-1 flex flex-wrap gap-1">

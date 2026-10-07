@@ -22,7 +22,6 @@ The app never works around a gap with rules of its own.
 
 | Id | What the app is missing | Engine status |
 |---|---|---|
-| R3 | Bloodied | open |
 | R4 | Creature space | open |
 | R5 | Emanation zones' squares | open |
 | R6 | Cunning / Brutal Strike on attack options | open |
@@ -34,12 +33,6 @@ The app never works around a gap with rules of its own.
 | R12 | `unassignedValues` | open |
 | R13 | Translatable engine messages | open (large) |
 | R14 | Positions required when the map is in use (proposal) | open, low priority |
-
-### R3. Bloodied
-
-- **Meanwhile.** HP bars are always graphite (`HpBar`, `src/components/ui.tsx`).
-- **When done.** Red bar when `bloodied`; the rail (`InitiativeRail.tsx`) and the sheet's
-  `HitPoints.tsx` pass it to `HpBar`.
 
 ### R4. Creature space
 
@@ -113,3 +106,4 @@ The app never works around a gap with rules of its own.
 |---|---|---|---|
 | R1 | Starting equipment taken after the state exists | `aef3cf1` (main) | sheet notice + `take_starting_equipment` (`InventoryTab.tsx` `StartingEquipment`) |
 | R2 | Exploration and points of interest | `3b81071` (main) | `ExplorationPanel.tsx`, `PointPanel.tsx`, the map's Points tool and markers, the Move hint's turns |
+| R3 | Bloodied | `d07df13` (main) | `HpBar` `bloodied` (red), "Bloodied" label on the rail and the sheet |

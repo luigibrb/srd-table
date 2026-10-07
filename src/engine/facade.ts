@@ -265,6 +265,8 @@ export interface CombatantView {
   readonly hp: number;
   readonly max_hp: number;
   readonly temp_hp: number;
+  /** At half its Hit Points or fewer (the engine's `bloodied`). */
+  readonly bloodied: boolean;
   readonly armor_class: number;
   readonly conditions: readonly { readonly id: string; readonly name: string }[];
   readonly concentration: string | null;
@@ -772,6 +774,7 @@ function encounterView(encounter: Encounter, party: Party, catalog: Catalog): En
           hp: view.hp,
           max_hp: view.max_hp,
           temp_hp: view.temp_hp,
+          bloodied: view.bloodied,
           armor_class: view.armor_class,
           conditions: view.conditions.map((id) => ({ id, name: conditionName(id) })),
           concentration: play ? play.concentration : c.concentration,
@@ -789,6 +792,7 @@ function encounterView(encounter: Encounter, party: Party, catalog: Catalog): En
           hp: c.hp ?? 0,
           max_hp: 0,
           temp_hp: c.temp_hp,
+          bloodied: false,
           armor_class: 0,
           conditions: c.conditions.map((id) => ({ id, name: conditionName(id) })),
           concentration: c.concentration,

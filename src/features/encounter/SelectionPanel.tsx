@@ -62,7 +62,15 @@ export function SelectionPanel({
             {c.size && ` · ${titleCase(c.size)}`}
             {c.position && ` · (${c.position.x}, ${c.position.y})`}
           </div>
-          {showHp && <HpBar hp={c.hp} max={c.max_hp} temp={c.temp_hp} className="mt-1" />}
+          {showHp && (
+            <HpBar
+              hp={c.hp}
+              max={c.max_hp}
+              temp={c.temp_hp}
+              bloodied={c.bloodied}
+              className="mt-1"
+            />
+          )}
         </div>
         {c.character && (
           <Link

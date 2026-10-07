@@ -32,6 +32,17 @@ describe("sheet", () => {
     expect(await within(hp).findByText("23")).toBeInTheDocument();
   });
 
+  it("shows Bloodied when the engine says so", async () => {
+    const id = await storedFighter();
+    await renderApp(`/characters/${id}/sheet`);
+    const hp = await screen.findByRole("region", { name: "Hit Points" }, { timeout: 10_000 });
+    expect(within(hp).queryByText("Bloodied")).toBeNull();
+    // 28 HP: 14 left is half, so Bloodied.
+    await userEvent.type(within(hp).getByPlaceholderText("Amount"), "14");
+    await userEvent.click(within(hp).getByRole("button", { name: "Damage" }));
+    expect(await within(hp).findByText("Bloodied")).toBeInTheDocument();
+  });
+
   it("shows the engine's refusal where the player acted", async () => {
     const id = await storedFighter();
     await renderApp(`/characters/${id}/sheet?tab=combat`);

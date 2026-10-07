@@ -119,6 +119,7 @@ function CharacterCard({ record }: { record: CharacterRecord }) {
               hp={sheet.play.hp.current}
               max={sheet.play.hp.max}
               temp={sheet.play.hp.temp}
+              bloodied={sheet.play.hp.bloodied}
               className="flex-1"
             />
           </div>

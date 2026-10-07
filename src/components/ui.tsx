@@ -259,15 +259,17 @@ export function HpBar({
   hp,
   max,
   temp = 0,
+  bloodied = false,
   className,
 }: {
   hp: number;
   max: number;
   temp?: number;
+  /** The engine's `bloodied`: the bar turns red. */
+  bloodied?: boolean;
   className?: string;
 }) {
   const pct = max > 0 ? Math.max(0, Math.min(100, (hp / max) * 100)) : 0;
-  // Graphite, whatever the number: telling "Bloodied" needs the engine (ENGINE-GAPS.md).
   return (
     <div
       className={cx(
@@ -276,7 +278,10 @@ export function HpBar({
       )}
       aria-hidden="true"
     >
-      <div className="h-full rounded-full bg-ink transition-[width]" style={{ width: `${pct}%` }} />
+      <div
+        className={cx("h-full rounded-full transition-[width]", bloodied ? "bg-red" : "bg-ink")}
+        style={{ width: `${pct}%` }}
+      />
       {temp > 0 && <div className="absolute inset-y-0 right-0 w-1/5 bg-blue/70" />}
     </div>
   );
