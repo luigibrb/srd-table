@@ -37,6 +37,8 @@ import {
   createEncounter,
   createState,
   currentCombatant,
+  type D20TestRequest,
+  type D20TestResult,
   DAMAGE_TYPES,
   type DamagePart,
   type DamageType,
@@ -83,6 +85,7 @@ import {
   reconcileState,
   roll,
   rollAbilityScores,
+  rollCheck,
   rollDamage,
   SKILL_ABILITY,
   SKILLS,
@@ -374,6 +377,16 @@ export interface EngineFacade {
 
   // play
   createState(build: CharacterBuild): Promise<CharacterState>;
+  /**
+   * A character's D20 Test outside an encounter (a sheet's roll button): an ability check, a
+   * saving throw or an attack roll, with the Advantage, Disadvantage and automatic failures its
+   * conditions and features give (the engine's `rollCheck`, its dice).
+   */
+  rollCheck(
+    build: CharacterBuild,
+    state: CharacterState,
+    request: D20TestRequest,
+  ): Promise<D20TestResult>;
   /** The catalog items a magic item can be made from (`[]`: none, or no base). */
   magicItemBases(magicItemId: string): Promise<readonly string[]>;
   /** What `take_starting_equipment` adds: the build's starting equipment and gold. */
@@ -498,6 +511,8 @@ export function createInProcessFacade(options: FacadeOptions): EngineFacade {
     rollAbilityScores: async () => rollAbilityScores(rng),
 
     createState: (build) => content.run("play", (catalog) => createState(build, catalog)),
+    rollCheck: (build, state, request) =>
+      content.run("play", (catalog) => rollCheck(build, state, catalog, request, { rng })),
     magicItemBases: (id) => content.run("play", (catalog) => magicItemBases(catalog, id)),
     startingEquipment: (build) =>
       content.run("play", (catalog) => startingEquipment(build, catalog)),

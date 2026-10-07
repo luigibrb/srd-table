@@ -22,18 +22,11 @@ The app never works around a gap with rules of its own.
 
 | Id | What the app is missing | Engine status |
 |---|---|---|
-| R9 | Rolls for a character outside an encounter | open |
 | R10 | Combatant ids in results | open |
 | R11 | Option previews in the builder | open |
 | R12 | `unassignedValues` | open |
 | R13 | Translatable engine messages | open (large) |
 | R14 | Positions required when the map is in use (proposal) | open, low priority |
-
-### R9. Rolls outside an encounter
-
-- **Meanwhile.** Sheet roll buttons (`OverviewTab.tsx` `RollButton`, `CombatTab.tsx`) are
-  labelled free rolls of `1d20+bonus`.
-- **When done.** A facade `rollCheck`; the dice tray shows the mode and its reasons.
 
 ### R10. Combatant ids in results
 
@@ -74,3 +67,4 @@ The app never works around a gap with rules of its own.
 | R6 | Cunning / Brutal Strike | `b22a78e` (main) | "Strike effects" in the composer from `OptionEntry.strikes` (unavailable ones disabled with the engine's reason, not hidden), merged into the attack |
 | R7 | Rest-change options as played | `7ec7459` (main) | facade `evaluatePlay` (`evaluate(playBuild(…))`) for the sheet's "Today's picks" (`RestChoices.tsx`) |
 | R8 | Magic item bases | `bcc01bd` (main) | "Add an item" offers only `magicItemBases` (facade `magicItemBases`, `useMagicItemBases`) |
+| R9 | Rolls outside an encounter | `51d904d` (main) | sheet roll buttons (checks, saves, attack rolls) call `rollCheck` (facade, `rollTest` in `store/dice.ts`); the tray shows mode, reasons, outcome |

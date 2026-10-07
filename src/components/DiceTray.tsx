@@ -9,6 +9,7 @@ import type {
   AttackResult,
   CheckResult,
   D20Roll,
+  D20TestResult,
   RolledDamage,
   RollResult,
   SaveResult,
@@ -57,12 +58,52 @@ function DiceCard({ item }: { item: DiceShown }) {
       </div>
       {item.kind === "roll" ? (
         <FreeRoll roll={item.roll} />
+      ) : item.kind === "test" ? (
+        <Test test={item.test} />
       ) : item.kind === "damage" ? (
         <Damage damage={item.damage} />
       ) : (
         <ActionRolls result={item.result} />
       )}
     </div>
+  );
+}
+
+/** A sheet's D20 Test: the engine's label, mode and reasons, and the outcome when it has one. */
+function Test({ test }: { test: D20TestResult }) {
+  const outcome = test.automatic_failure
+    ? t("dice.autoFail", { condition: test.automatic_failure })
+    : test.critical
+      ? t("dice.critical")
+      : test.success === null
+        ? undefined
+        : test.kind === "attack"
+          ? t(test.success ? "dice.hit" : "dice.miss")
+          : t(test.success ? "dice.success" : "dice.failure");
+  const tone =
+    test.automatic_failure || test.critical_miss || test.success === false
+      ? "bad"
+      : test.critical || test.success
+        ? "good"
+        : null;
+  return (
+    <>
+      <D20
+        label={test.label}
+        roll={test.roll}
+        bonus={test.bonus}
+        total={test.total}
+        {...(outcome ? { outcome } : {})}
+        tone={tone}
+      />
+      {test.reasons.length > 0 && (
+        <ul className="mt-1 text-[13px] text-ink-muted">
+          {test.reasons.map((r) => (
+            <li key={r}>{r}</li>
+          ))}
+        </ul>
+      )}
+    </>
   );
 }
 

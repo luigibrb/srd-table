@@ -43,6 +43,21 @@ describe("sheet", () => {
     expect(await within(hp).findByText("Bloodied")).toBeInTheDocument();
   });
 
+  it("rolls a check through the engine, with a condition's Disadvantage and its reason", async () => {
+    const id = await storedFighter();
+    await useDocuments.getState().playAction(id, { type: "add_condition", condition: "poisoned" });
+    await renderApp(`/characters/${id}/sheet`);
+    const roll = await screen.findByRole(
+      "button",
+      { name: /^Athletics .*: Roll$/ },
+      { timeout: 10_000 },
+    );
+    await userEvent.click(roll);
+    const [line] = await screen.findAllByText(/Athletics check \(Disadvantage\)/);
+    const card = line?.closest(".panel") as HTMLElement;
+    expect(card).toHaveTextContent(/Poisoned/);
+  });
+
   it("shows the engine's refusal where the player acted", async () => {
     const id = await storedFighter();
     await renderApp(`/characters/${id}/sheet?tab=combat`);

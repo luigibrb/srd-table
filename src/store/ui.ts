@@ -3,7 +3,7 @@
  * the view (GM or a player). Nothing here is persisted except the view, per browser.
  */
 
-import type { RolledDamage, RollResult } from "srd-rules-engine";
+import type { D20TestResult, RolledDamage, RollResult } from "srd-rules-engine";
 import { create } from "zustand";
 import type { ActionResult } from "@/engine/facade";
 
@@ -27,6 +27,12 @@ export type DiceShown =
   | { readonly id: number; readonly kind: "roll"; readonly who: string; readonly roll: RollResult }
   | {
       readonly id: number;
+      readonly kind: "test";
+      readonly who: string;
+      readonly test: D20TestResult;
+    }
+  | {
+      readonly id: number;
       readonly kind: "damage";
       readonly who: string;
       readonly damage: RolledDamage;
@@ -35,6 +41,7 @@ export type DiceShown =
 type DiceInput =
   | { readonly kind: "action"; readonly who: string; readonly result: NonNullable<ActionResult> }
   | { readonly kind: "roll"; readonly who: string; readonly roll: RollResult }
+  | { readonly kind: "test"; readonly who: string; readonly test: D20TestResult }
   | { readonly kind: "damage"; readonly who: string; readonly damage: RolledDamage };
 
 export type Role =

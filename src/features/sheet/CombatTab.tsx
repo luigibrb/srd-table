@@ -9,7 +9,7 @@ import type { PlaySheet } from "srd-rules-engine";
 import { Icon } from "@/components/Icon";
 import { Button, Empty, Gems, Reasons, Section } from "@/components/ui";
 import { signed, t } from "@/i18n";
-import { rollDamage, rollDice } from "@/store/dice";
+import { rollDamage, rollTest } from "@/store/dice";
 import { useDocuments } from "@/store/documents";
 import { usePlay } from "./usePlay";
 
@@ -87,12 +87,7 @@ function Attacks({ id, sheet }: { id: string; sheet: PlaySheet }) {
                       icon="d20"
                       iconOnly
                       label={`${a.name}: ${t("dice.attack")}`}
-                      onClick={() =>
-                        void rollDice(
-                          `1d20${a.attack_bonus >= 0 ? "+" : ""}${a.attack_bonus}`,
-                          `${name} · ${a.name}`,
-                        )
-                      }
+                      onClick={() => void rollTest(id, { attack: a.name })}
                     />
                     <Button
                       size="sm"

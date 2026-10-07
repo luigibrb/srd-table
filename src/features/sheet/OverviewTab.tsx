@@ -3,35 +3,35 @@
  * dice (`1d20` + the sheet's bonus); in an encounter, checks use the encounter's `check` action.
  */
 
-import type { PlaySheet } from "srd-rules-engine";
+import type { D20TestRequest, PlaySheet } from "srd-rules-engine";
 import { Icon } from "@/components/Icon";
 import { Section } from "@/components/ui";
 import { abilities, abilityName, skillName } from "@/engine/constants";
 import { signed, t } from "@/i18n";
 import { titleCase } from "@/lib/format";
 import { useNames } from "@/queries";
-import { rollDice } from "@/store/dice";
-import { useDocuments } from "@/store/documents";
+import { rollTest } from "@/store/dice";
 
+/** The engine rolls the check, save or attack for this character (`rollCheck`). */
 function useRoller(id: string) {
-  const name = useDocuments((s) => s.characters[id]?.build.name ?? "");
-  return (label: string, bonus: number) =>
-    void rollDice(`1d20${bonus >= 0 ? "+" : ""}${bonus}`, `${name} · ${label}`);
+  return (request: D20TestRequest) => void rollTest(id, request);
 }
 
 function RollButton({
   label,
   bonus,
+  request,
   onRoll,
 }: {
   label: string;
   bonus: number;
-  onRoll: (label: string, bonus: number) => void;
+  request: D20TestRequest;
+  onRoll: (request: D20TestRequest) => void;
 }) {
   return (
     <button
       type="button"
-      onClick={() => onRoll(label, bonus)}
+      onClick={() => onRoll(request)}
       className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-semibold tabular-nums hover:bg-card-3 hover:text-ink"
       aria-label={`${label} ${signed(bonus)}: ${t("dice.rollButton")}`}
     >
@@ -72,6 +72,7 @@ export function OverviewTab({ id, sheet }: { id: string; sheet: PlaySheet }) {
                     <RollButton
                       label={abilityName(a)}
                       bonus={sheet.ability_checks[a]}
+                      request={{ ability: a }}
                       onRoll={roll}
                     />
                   </td>
@@ -85,6 +86,7 @@ export function OverviewTab({ id, sheet }: { id: string; sheet: PlaySheet }) {
                       <RollButton
                         label={`${abilityName(a)} ${t("sheet.saves")}`}
                         bonus={save.modifier}
+                        request={{ save: a }}
                         onRoll={roll}
                       />
                     </span>
@@ -118,7 +120,12 @@ export function OverviewTab({ id, sheet }: { id: string; sheet: PlaySheet }) {
                 {skillName(s.skill)}{" "}
                 <span className="text-[13px] text-ink-faint uppercase">{s.ability}</span>
               </span>
-              <RollButton label={skillName(s.skill)} bonus={s.modifier} onRoll={roll} />
+              <RollButton
+                label={skillName(s.skill)}
+                bonus={s.modifier}
+                request={{ skill: s.skill }}
+                onRoll={roll}
+              />
             </li>
           ))}
         </ul>
