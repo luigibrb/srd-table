@@ -116,3 +116,14 @@ given), not their combatant ids.
 **Meanwhile.** The dice tray shows names.
 
 **Wanted.** The combatant id on each target result of an encounter action.
+
+## 11. Bloodied
+
+**Missing.** Whether a combatant or character is Bloodied (at half its Hit Points or fewer, a
+rules term in SRD 5.2.1), on the combatant view and the play sheet.
+
+**Meanwhile.** HP bars are drawn in one colour (graphite); the UI doesn't work out the half
+itself.
+
+**Wanted.** `bloodied: boolean` on `encounterCombatant`'s view and on `computePlaySheet`'s HP; the
+bar then turns red (`HpBar` in `src/components/ui.tsx`).

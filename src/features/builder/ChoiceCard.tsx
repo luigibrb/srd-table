@@ -46,7 +46,7 @@ export function ChoiceCard({
     <section
       aria-label={choice.label}
       aria-busy={busy}
-      className={cx("panel p-3", missing > 0 ? "border-gold/50" : "")}
+      className={cx("panel p-3", missing > 0 ? "border-l-4 border-l-orange" : "")}
     >
       <header className="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h3 className="font-display text-lg font-semibold text-ink">{choice.label}</h3>
@@ -87,7 +87,7 @@ function FixedAnswer({ choice }: { choice: ChoiceView }) {
   return (
     <ul className="flex flex-wrap gap-2">
       {(choice.fixed ?? []).map((id) => (
-        <li key={id} className="plaque plaque-sm" data-on="true">
+        <li key={id} className="btn btn-sm" data-on="true">
           <Icon name="lock" size={14} />
           {nameOf(choice.options, id)}
         </li>
@@ -138,7 +138,7 @@ function Options({
     <div>
       {choice.options.length >= SEARCH_FROM && (
         <label className="mb-2 flex items-center gap-2">
-          <Icon name="search" className="text-bronze" />
+          <Icon name="search" className="text-ink-muted" />
           <span className="sr-only">{t("common.search")}</span>
           <input
             className="field"
@@ -188,11 +188,7 @@ export function MoreText({ title, text }: { title: string; text: string }) {
   return (
     <Popover.Root>
       <Popover.Trigger asChild>
-        <button
-          type="button"
-          className="plaque !px-2"
-          aria-label={`${t("common.details")}: ${title}`}
-        >
+        <button type="button" className="btn !px-2" aria-label={`${t("common.details")}: ${title}`}>
           <Icon name="info" size={16} />
         </button>
       </Popover.Trigger>
@@ -201,9 +197,9 @@ export function MoreText({ title, text }: { title: string; text: string }) {
           side="left"
           sideOffset={6}
           collisionPadding={12}
-          className="prose-srd z-50 max-h-[60vh] w-[min(28rem,90vw)] overflow-y-auto rounded-md border border-line-strong bg-panel-2 p-3 text-sm shadow-panel"
+          className="prose-srd z-50 max-h-[60vh] w-[min(28rem,90vw)] overflow-y-auto rounded-md border border-edge-strong bg-card-2 p-3 text-sm shadow-panel"
         >
-          <div className="mb-1 font-semibold text-gold">{title}</div>
+          <div className="mb-1 font-bold text-ink">{title}</div>
           <SrdText text={text} />
         </Popover.Content>
       </Popover.Portal>
@@ -226,7 +222,7 @@ function Increases({
       {choice.options.map((o) => {
         const n = counts.get(o.id) ?? 0;
         return (
-          <li key={o.id} className="flex items-center gap-2 rounded border border-line px-2 py-1">
+          <li key={o.id} className="flex items-center gap-2 rounded border border-edge px-2 py-1">
             <span className="flex-1">
               {o.name}
               {o.unavailable && (

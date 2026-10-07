@@ -1,4 +1,7 @@
-/** Notes from setters and play actions, and app messages, as toasts at the top of the screen. */
+/**
+ * Notes from setters and play actions, and app messages, as toasts in the bottom-left corner (the
+ * dice tray has the bottom-right one), away from the stats at the top of the sheet.
+ */
 
 import { useEffect } from "react";
 import { t } from "@/i18n";
@@ -14,7 +17,7 @@ export function Toasts() {
     <section
       aria-label={t("toasts.region")}
       aria-live="polite"
-      className="pointer-events-none fixed top-16 left-1/2 z-50 flex w-[min(34rem,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-2"
+      className="pointer-events-none fixed bottom-10 left-4 z-50 flex w-[min(24rem,calc(100vw-2rem))] flex-col-reverse gap-2"
     >
       {toasts.map((toast) => (
         <ToastCard key={toast.id} toast={toast} />
@@ -35,13 +38,20 @@ function ToastCard({ toast }: { toast: Toast }) {
       role={toast.tone === "error" ? "alert" : "status"}
       className={cx(
         "panel rise-in pointer-events-auto flex gap-2 p-3 shadow-panel",
-        toast.tone === "error" && "border-blood",
-        toast.tone === "warning" && "border-gold",
+        toast.tone === "error" && "border-red",
+        toast.tone === "warning" && "border-orange",
       )}
     >
       <Icon
         name={toast.tone === "info" ? "info" : "warning"}
-        className={cx("mt-0.5 flex-none", toast.tone === "error" ? "text-blood" : "text-gold")}
+        className={cx(
+          "mt-0.5 flex-none",
+          toast.tone === "error"
+            ? "text-red"
+            : toast.tone === "warning"
+              ? "text-orange"
+              : "text-ink-muted",
+        )}
       />
       <div className="min-w-0 flex-1 text-sm">
         {toast.title && <div className="font-semibold">{toast.title}</div>}

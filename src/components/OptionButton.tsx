@@ -1,8 +1,8 @@
 /**
  * An option the engine lists, available or not. An unavailable one is never hidden: it stays in
- * place, greyed out and still focusable (`aria-disabled`), with the engine's reason word for word:
- * under the label in a list row, on hover and focus for a quick-bar tile, and always read by
- * screen readers (`aria-describedby`).
+ * place, with a dashed outline and still focusable (`aria-disabled`), with the engine's reason word
+ * for word under the label (on a quick-bar tile too, where hover also shows it whole), and always
+ * read by screen readers (`aria-describedby`).
  */
 
 import { Tooltip } from "radix-ui";
@@ -29,7 +29,7 @@ export function OptionButton({
   /** A second line (a cost, uses left). */
   detail?: ReactNode;
   className?: string;
-  /** `row`: a full-width list entry; `tile`: a quick-bar square. */
+  /** `row`: a full-width list entry; `tile`: a quick-bar card that grows with its text. */
   variant?: "row" | "tile";
 }) {
   const reasonId = useId();
@@ -45,33 +45,40 @@ export function OptionButton({
         if (!unavailable) onClick?.();
       }}
       className={cx(
-        "plaque",
+        "btn",
         variant === "row"
           ? "w-full !justify-start text-left"
-          : "h-[5.5rem] w-[6.5rem] flex-col !justify-start overflow-hidden !gap-1 !px-1 !pt-2 text-center text-[13px] leading-tight",
-        unavailable && "cursor-not-allowed opacity-50",
+          : "min-w-[9rem] max-w-[15rem] !items-start !justify-start !gap-2 !py-2 !pr-7 !pl-2.5 text-left leading-snug",
         className,
       )}
     >
-      {icon && <Icon name={icon} size={variant === "tile" ? 22 : 18} className="flex-none" />}
+      {icon && (
+        <Icon name={icon} size={18} className={cx("flex-none", variant === "tile" && "mt-0.5")} />
+      )}
       <span className={cx("min-w-0", variant === "row" && "flex-1")}>
-        <span className={variant === "tile" ? "line-clamp-3 overflow-hidden" : "block"}>
-          {children}
-        </span>
-        {detail && variant === "row" && (
-          <span className="block text-[13px] text-ink-muted">{detail}</span>
+        <span className="block">{children}</span>
+        {detail && (
+          <span
+            className={cx(
+              "block text-[13px] font-normal text-ink-muted",
+              variant === "tile" && "line-clamp-2",
+            )}
+          >
+            {detail}
+          </span>
         )}
-        {unavailable && variant === "row" && (
-          <span id={reasonId} className="block text-[13px] text-ink-muted italic">
+        {unavailable && (
+          <span
+            id={reasonId}
+            className={cx(
+              "block text-[13px] font-normal text-ink-muted italic",
+              variant === "tile" && "line-clamp-2",
+            )}
+          >
             {reason}
           </span>
         )}
       </span>
-      {unavailable && variant === "tile" && (
-        <span id={reasonId} className="sr-only">
-          {reason}
-        </span>
-      )}
     </button>
   );
   if (variant === "row" || (!unavailable && !detail)) return button;
@@ -82,17 +89,17 @@ export function OptionButton({
         <Tooltip.Content
           side="top"
           sideOffset={6}
-          className="z-50 max-w-xs rounded-md border border-line-strong bg-panel-2 px-3 py-2 text-sm shadow-panel"
+          className="z-50 max-w-xs rounded-md border border-edge-strong bg-card-2 px-3 py-2 text-sm shadow-panel"
         >
           <div className="font-semibold">{children}</div>
           {detail && <div className="text-ink-muted">{detail}</div>}
           {unavailable && (
             <div className="flex gap-1.5 text-ink">
-              <Icon name="lock" size={15} className="mt-0.5 flex-none text-blood" />
+              <Icon name="lock" size={15} className="mt-0.5 flex-none text-red" />
               {reason}
             </div>
           )}
-          <Tooltip.Arrow className="fill-line-strong" />
+          <Tooltip.Arrow className="fill-edge-strong" />
         </Tooltip.Content>
       </Tooltip.Portal>
     </Tooltip.Root>

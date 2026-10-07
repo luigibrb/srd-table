@@ -69,4 +69,27 @@ describe("sheet", () => {
     );
     expect(useDocuments.getState().characters[id]?.state.hp.current).toBeGreaterThan(18);
   });
+
+  it("offers the starting equipment to a state made before it was picked, and takes it", async () => {
+    // A character created empty, then built: its state has no equipment yet.
+    const early = await engine.createState(await engine.newBuild());
+    const result = await useDocuments.getState().importCharacter(await fighter(engine, 3), early);
+    if (!result.ok) throw new Error(result.reasons.join("; "));
+    await renderApp(`/characters/${result.id}/sheet`);
+    const notice = await screen.findByRole(
+      "region",
+      { name: "Starting equipment" },
+      { timeout: 10_000 },
+    );
+    expect(notice).toHaveTextContent(/Chain Mail/);
+    await userEvent.click(within(notice).getByRole("button", { name: "Take starting equipment" }));
+    await waitFor(() => {
+      const state = useDocuments.getState().characters[result.id]?.state;
+      expect(state?.starting_equipment).toBe(true);
+      expect(state?.inventory.some((i) => i.item === "chain-mail" && i.equipped)).toBe(true);
+    });
+    await waitFor(() =>
+      expect(screen.queryByRole("region", { name: "Starting equipment" })).toBeNull(),
+    );
+  });
 });

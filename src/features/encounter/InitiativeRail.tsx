@@ -1,6 +1,7 @@
 /**
  * The Initiative order down the left side: each combatant with its Initiative, HP, AC,
- * conditions and Concentration; the one whose turn it is glows. Players don't see monsters' HP
+ * conditions and Concentration; a stripe in its side's colour; the one whose turn it is is
+ * highlighted. Players don't see monsters' HP
  * numbers.
  */
 
@@ -10,11 +11,12 @@ import { cx, HpBar } from "@/components/ui";
 import type { CombatantView, EncounterView } from "@/engine/facade";
 import { t } from "@/i18n";
 import { ConditionMedal } from "../sheet/HitPoints";
-import { useTableUi } from "./tableUi";
+import { alliedSides, useTableUi } from "./tableUi";
 
 export function InitiativeRail({ view, gm }: { view: EncounterView; gm: boolean }) {
   const selected = useTableUi((s) => s.selected);
   const select = useTableUi((s) => s.select);
+  const allies = alliedSides(view);
   return (
     <nav aria-label={t("table.initiative")} className="min-h-0 overflow-y-auto">
       <ol className="space-y-1.5">
@@ -24,6 +26,7 @@ export function InitiativeRail({ view, gm }: { view: EncounterView; gm: boolean 
               c={c}
               current={view.current === c.id}
               selected={selected === c.id}
+              allied={allies.has(c.side)}
               showHp={gm || c.character !== null}
               onSelect={() => select(c.id)}
             />
@@ -38,12 +41,14 @@ function RailEntry({
   c,
   current,
   selected,
+  allied,
   showHp,
   onSelect,
 }: {
   c: CombatantView;
   current: boolean;
   selected: boolean;
+  allied: boolean;
   showHp: boolean;
   onSelect: () => void;
 }) {
@@ -62,9 +67,10 @@ function RailEntry({
       aria-current={current ? "true" : undefined}
       aria-pressed={selected}
       className={cx(
-        "flex w-full items-stretch gap-2 rounded-lg border bg-panel p-1.5 text-left transition-colors",
-        selected ? "border-gold" : "border-line hover:border-line-strong",
-        current && "shadow-[0_0_14px_rgb(201_162_74/0.45)]",
+        "flex w-full items-stretch gap-2 rounded border border-l-4 bg-card p-1.5 text-left shadow-card transition-colors",
+        allied ? "!border-l-blue" : "!border-l-red",
+        selected ? "border-blue ring-1 ring-blue" : "border-edge hover:border-edge-strong",
+        current && "outline-2 -outline-offset-1 outline-hl",
         down && "opacity-55",
       )}
     >
@@ -73,7 +79,7 @@ function RailEntry({
         <span
           className={cx(
             "absolute -top-1.5 -left-1.5 flex h-6 min-w-6 items-center justify-center rounded-full border px-1 text-[13px] font-bold tabular-nums",
-            current ? "border-gold bg-gold text-ground" : "border-line-strong bg-panel-2 text-ink",
+            current ? "border-ink bg-hl text-hl-ink" : "border-edge-strong bg-card-2 text-ink",
           )}
           title={t("table.initiative")}
         >
@@ -84,18 +90,18 @@ function RailEntry({
         <div className="flex items-baseline gap-1">
           <span
             className={cx(
-              "truncate font-display text-lg leading-tight font-semibold",
-              current ? "text-gold-hi" : "text-ink",
+              "truncate font-display text-lg leading-tight",
+              current ? "hl" : "text-ink",
             )}
           >
             {c.name}
           </span>
           {c.concentration && (
-            <Icon name="concentration" size={14} className="flex-none text-violet" />
+            <Icon name="concentration" size={14} className="flex-none text-purple" />
           )}
         </div>
         {c.error ? (
-          <span className="text-[13px] text-blood">{t("table.characterMissing")}</span>
+          <span className="text-[13px] text-red">{t("table.characterMissing")}</span>
         ) : (
           <>
             <div className="flex items-baseline gap-2 text-sm">
@@ -114,13 +120,11 @@ function RailEntry({
               </span>
             </div>
             {showHp && <HpBar hp={c.hp} max={c.max_hp} temp={c.temp_hp} className="my-1" />}
-            {status && showHp && (
-              <div className="text-[13px] font-semibold text-blood">{status}</div>
-            )}
+            {status && showHp && <div className="text-[13px] font-semibold text-red">{status}</div>}
             {c.conditions.length > 0 && (
-              <div className="mt-0.5 flex flex-wrap gap-0.5">
+              <div className="mt-1 flex flex-wrap gap-1">
                 {c.conditions.map((cond) => (
-                  <ConditionMedal key={cond.id} id={cond.id} size={20} label={cond.name} />
+                  <ConditionMedal key={cond.id} label={cond.name} />
                 ))}
               </div>
             )}

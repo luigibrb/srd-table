@@ -37,7 +37,8 @@ describe("persistence", () => {
     expect(state.characters["c-old"]?.build.choices).toEqual({});
     expect(state.encounters["e-old"]?.encounter.round).toBe(0);
     expect(state.encounters["e-old"]?.log).toEqual([]);
-    expect(useSettings.getState().settings.theme).toBe("parchment");
+    // Saved before the Mat and Marker look: parchment is now Mat.
+    expect(useSettings.getState().settings.theme).toBe("mat");
     const saved = await database.get("characters", "c-old");
     expect((saved?.build as { version?: number } | undefined)?.version).toBe(1);
   });

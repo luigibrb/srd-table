@@ -39,8 +39,8 @@ export function DecisionDialog({
 
   if (!canAnswer) {
     return (
-      <div role="status" className="panel flex items-center gap-2 border-gold/60 p-3">
-        <Icon name="hourglass" className="text-gold" />
+      <div role="status" className="panel flex items-center gap-2 border-l-4 border-l-orange p-3">
+        <Icon name="hourglass" className="text-orange" />
         <span>
           {t("table.pending")} · {t("table.decisionFor", { name: who })}
         </span>
@@ -67,7 +67,7 @@ export function DecisionDialog({
             )}
           </Button>
           <Button
-            variant="gold"
+            variant="primary"
             icon="check"
             autoFocus={pending.recommended}
             disabled={busy}

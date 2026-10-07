@@ -54,7 +54,7 @@ export function SelectionPanel({
       <div className="mb-2 flex items-center gap-3">
         <Portrait id={c.character} name={c.name} size={48} round />
         <div className="min-w-0 flex-1">
-          <div className="truncate font-display text-xl font-semibold text-gold">{c.name}</div>
+          <div className="truncate font-display text-xl text-ink">{c.name}</div>
           <div className="text-sm text-ink-muted">
             {showHp &&
               `${t("summary.hp")} ${c.hp}/${c.max_hp}${c.temp_hp ? ` +${c.temp_hp}` : ""} · `}
@@ -69,7 +69,7 @@ export function SelectionPanel({
             to="/characters/$id/sheet"
             params={{ id: c.character }}
             search={{}}
-            className="plaque !px-2"
+            className="btn !px-2"
             aria-label={`${t("characters.sheet")}: ${c.name}`}
             title={t("characters.sheet")}
           >
@@ -80,14 +80,14 @@ export function SelectionPanel({
       {(c.conditions.length > 0 || c.concentration) && (
         <ul className="mb-2 flex flex-wrap gap-1.5 text-sm">
           {c.concentration && (
-            <li className="flex items-center gap-1 text-violet">
+            <li className="flex items-center gap-1 text-purple">
               <Icon name="concentration" size={16} />
               {c.concentration}
             </li>
           )}
           {c.conditions.map((cond) => (
             <li key={cond.id} className="flex items-center gap-1">
-              <ConditionMedal id={cond.id} />
+              <ConditionMedal />
               {cond.name}
             </li>
           ))}
@@ -140,7 +140,7 @@ function CheckForm({ id, act }: { id: string; act: Act }) {
   const isAbility = (abilities() as readonly string[]).includes(what);
   const n = Number.parseInt(dc, 10);
   return (
-    <details className="mb-2 rounded border border-line px-2 py-1.5">
+    <details className="mb-2 border-t border-edge pt-2">
       <summary className="cursor-pointer text-sm font-semibold">{t("table.check")}</summary>
       <div className="mt-2 flex flex-wrap items-end gap-2">
         <label className="flex flex-col text-[13px] text-ink-muted">
@@ -202,7 +202,7 @@ function GmControls({ c, act }: { c: CombatantView; act: Act }) {
   const timing = Number.isInteger(r) && r > 0 ? { rounds: r } : {};
 
   return (
-    <details className="rounded border border-line px-2 py-1.5" open>
+    <details className="border-t border-edge pt-2" open>
       <summary className="cursor-pointer text-sm font-semibold">{t("table.gmControls")}</summary>
       <div className="mt-2 space-y-3 text-sm">
         <div className="flex flex-wrap items-end gap-2">

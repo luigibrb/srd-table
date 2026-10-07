@@ -1,7 +1,8 @@
 /**
  * Inventory: equip, attune, use (potions, charges), remove, add catalog items (a magic weapon or
- * armor made from a base, an item of a kind), coins. Every change is a play action; the engine
- * checks attunement limits, charges and bases.
+ * armor made from a base, an item of a kind), coins; and the notice for starting equipment not
+ * taken yet (shown above the sheet's tabs). Every change is a play action; the engine checks
+ * attunement limits, charges and bases.
  */
 
 import { useMemo, useState } from "react";
@@ -11,9 +12,9 @@ import { SrdText } from "@/components/SrdText";
 import { Button, cx, Dialog, Empty, Reasons, Section } from "@/components/ui";
 import { VirtualList } from "@/components/VirtualList";
 import { constants } from "@/engine/constants";
-import { formatNumber, t } from "@/i18n";
+import { formatList, formatNumber, t } from "@/i18n";
 import { titleCase } from "@/lib/format";
-import { useTable } from "@/queries";
+import { useStartingEquipment, useTable } from "@/queries";
 import { usePlay } from "./usePlay";
 
 type Currency = (typeof CURRENCIES)[number];
@@ -57,7 +58,7 @@ export function InventoryTab({ id, sheet }: { id: string; sheet: PlaySheet }) {
                   key={item.id}
                   className={cx(
                     "flex flex-wrap items-center gap-2 rounded border px-2 py-1.5",
-                    item.active ? "border-gold/60" : "border-line",
+                    item.active ? "border-ink" : "border-edge",
                   )}
                 >
                   <div className="min-w-[10rem] flex-1">
@@ -67,10 +68,12 @@ export function InventoryTab({ id, sheet }: { id: string; sheet: PlaySheet }) {
                         {item.qty > 1 && <span className="text-ink-muted"> ×{item.qty}</span>}
                       </span>
                       {item.equipped && (
-                        <span className="text-[13px] text-gold">{t("sheet.equipped")}</span>
+                        <span className="text-[13px] font-bold text-ink">
+                          {t("sheet.equipped")}
+                        </span>
                       )}
                       {item.attuned && (
-                        <span className="text-[13px] text-violet">{t("sheet.attuned")}</span>
+                        <span className="text-[13px] text-purple">{t("sheet.attuned")}</span>
                       )}
                     </div>
                     <div className="text-[13px] text-ink-muted">
@@ -174,7 +177,7 @@ function Coins({ id, sheet }: { id: string; sheet: PlaySheet }) {
     <Section title={t("sheet.coins")}>
       <dl className="mb-3 grid grid-cols-5 gap-2 text-center">
         {COINS.map((c) => (
-          <div key={c} className="rounded border border-line bg-panel-2 py-1">
+          <div key={c} className="rounded border border-edge bg-card-2 py-1">
             <dt className="text-[13px] text-ink-muted uppercase">{c}</dt>
             <dd className="font-display text-xl font-bold tabular-nums">
               {sheet.play.currency[c]}
@@ -273,7 +276,7 @@ function AddItemDialog({ id, onClose }: { id: string; onClose: () => void }) {
     <Dialog open onOpenChange={(o) => !o && onClose()} title={t("sheet.addItem")} wide>
       <Reasons reasons={reasons} className="mb-2" />
       <label className="mb-2 flex items-center gap-2">
-        <Icon name="search" className="text-bronze" />
+        <Icon name="search" className="text-ink-muted" />
         <span className="sr-only">{t("sheet.itemSearch")}</span>
         <input
           className="field"
@@ -287,7 +290,7 @@ function AddItemDialog({ id, onClose }: { id: string; onClose: () => void }) {
         <VirtualList
           items={visible}
           estimate={40}
-          className="h-[22rem] rounded border border-line"
+          className="h-[22rem] rounded border border-edge"
           label={t("sheet.addItem")}
           getKey={(i) => `${i.table}:${i.id}`}
           render={(i) => (
@@ -299,8 +302,8 @@ function AddItemDialog({ id, onClose }: { id: string; onClose: () => void }) {
                 setVariant("");
               }}
               className={cx(
-                "flex w-full items-baseline gap-2 border-b border-line/60 px-2 py-2 text-left hover:bg-panel-2",
-                picked?.id === i.id && picked.table === i.table && "bg-plaque-lit text-gold-hi",
+                "flex w-full items-baseline gap-2 border-b border-edge/60 px-2 py-2 text-left hover:bg-card-2",
+                picked?.id === i.id && picked.table === i.table && "bg-hl text-hl-ink",
               )}
             >
               <span className="flex-1">{i.name}</span>
@@ -313,7 +316,7 @@ function AddItemDialog({ id, onClose }: { id: string; onClose: () => void }) {
         <div className="space-y-2">
           {picked ? (
             <>
-              <h3 className="font-display text-xl font-semibold text-gold">{picked.name}</h3>
+              <h3 className="font-display text-xl text-ink">{picked.name}</h3>
               {bases && (
                 <label className="flex flex-col gap-1 text-sm">
                   {t("sheet.base")}
@@ -356,7 +359,7 @@ function AddItemDialog({ id, onClose }: { id: string; onClose: () => void }) {
                 />
               </label>
               <Button
-                variant="gold"
+                variant="primary"
                 icon="plus"
                 disabled={busy || !(count > 0)}
                 onClick={async () => {
@@ -401,5 +404,38 @@ function AddItemDialog({ id, onClose }: { id: string; onClose: () => void }) {
         </div>
       </div>
     </Dialog>
+  );
+}
+
+/**
+ * The build's starting equipment, not in the inventory yet (a character created before its
+ * equipment was picked): what it holds, and a button to take it.
+ */
+export function StartingEquipment({ id }: { id: string }) {
+  const { act, reasons, busy } = usePlay(id);
+  const kit = useStartingEquipment(id, true).data;
+  if (!kit || (kit.items.length === 0 && kit.gp === 0)) return null;
+  const names = kit.items.map((i) => (i.qty > 1 ? `${i.name} (${formatNumber(i.qty)})` : i.name));
+  if (kit.gp > 0) names.push(t("sheet.gold", { gp: formatNumber(kit.gp) }));
+  return (
+    <section
+      aria-label={t("sheet.startingEquipment")}
+      className="panel flex flex-wrap items-center gap-x-3 gap-y-2 border-l-4 border-l-orange p-3"
+    >
+      <Icon name="bag" size={18} className="flex-none text-orange" />
+      <div className="min-w-0 flex-1">
+        <p className="font-bold">{t("sheet.startingEquipmentMissing")}</p>
+        <p className="text-sm text-ink-muted">{formatList(names)}</p>
+      </div>
+      <Button
+        variant="primary"
+        icon="plus"
+        disabled={busy}
+        onClick={() => void act({ type: "take_starting_equipment" })}
+      >
+        {t("sheet.takeStartingEquipment")}
+      </Button>
+      <Reasons reasons={reasons} className="w-full" />
+    </section>
   );
 }

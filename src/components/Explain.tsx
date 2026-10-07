@@ -35,7 +35,7 @@ export function Explain({
           type="button"
           aria-label={text}
           className={cx(
-            "cursor-help rounded underline decoration-bronze/60 decoration-dotted underline-offset-4 hover:text-gold-hi",
+            "cursor-help rounded underline decoration-ink-faint decoration-dotted underline-offset-4 hover:text-ink",
             className,
           )}
         >
@@ -46,9 +46,9 @@ export function Explain({
         <Popover.Content
           side="top"
           sideOffset={6}
-          className="z-50 max-w-xs rounded-md border border-line-strong bg-panel-2 px-3 py-2 text-sm shadow-panel"
+          className="z-50 max-w-xs rounded-md border border-edge-strong bg-card-2 px-3 py-2 text-sm shadow-panel"
         >
-          <div className="font-semibold text-gold">
+          <div className="font-bold text-ink">
             {label} {sign ? signed(total) : total}
           </div>
           <ul className="mt-1 space-y-0.5">
@@ -59,7 +59,7 @@ export function Explain({
               </li>
             ))}
           </ul>
-          <Popover.Arrow className="fill-line-strong" />
+          <Popover.Arrow className="fill-edge-strong" />
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>

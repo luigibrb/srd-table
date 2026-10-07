@@ -7,7 +7,8 @@ import { create } from "zustand";
 import { engine } from "@/engine/client";
 
 export type DecisionMode = "ask" | "auto";
-export type Theme = "night" | "parchment";
+/** `system` follows the device (Mat when light, Felt when dark). */
+export type Theme = "system" | "mat" | "felt";
 
 export interface CampaignSettings {
   readonly version: 1;
@@ -35,7 +36,7 @@ export const DEFAULT_SETTINGS: CampaignSettings = {
   sources: null,
   character_decisions: "ask",
   monster_decisions: "ask",
-  theme: "night",
+  theme: "system",
   locale: "en",
   dev_seed: null,
   favorites: {},
@@ -82,6 +83,13 @@ export const useSettings = create<SettingsState>()((set) => ({
 }));
 
 /** Read a stored settings object, keeping known fields and filling defaults. */
+/** Settings saved before the Mat and Marker look had `parchment` (light) and `night` (dark). */
+function readTheme(v: unknown): Theme {
+  if (v === "mat" || v === "parchment") return "mat";
+  if (v === "felt" || v === "night") return "felt";
+  return "system";
+}
+
 export function readSettings(raw: unknown): CampaignSettings {
   if (typeof raw !== "object" || raw === null) return DEFAULT_SETTINGS;
   const r = raw as Partial<Record<keyof CampaignSettings, unknown>>;
@@ -94,7 +102,7 @@ export function readSettings(raw: unknown): CampaignSettings {
     sources: r.sources === null ? null : (strings(r.sources) ?? null),
     character_decisions: mode(r.character_decisions, DEFAULT_SETTINGS.character_decisions),
     monster_decisions: mode(r.monster_decisions, DEFAULT_SETTINGS.monster_decisions),
-    theme: r.theme === "parchment" ? "parchment" : "night",
+    theme: readTheme(r.theme),
     locale: typeof r.locale === "string" ? r.locale : "en",
     dev_seed: typeof r.dev_seed === "number" && Number.isInteger(r.dev_seed) ? r.dev_seed : null,
     favorites:

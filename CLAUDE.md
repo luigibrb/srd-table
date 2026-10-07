@@ -138,15 +138,30 @@ fact. A "roll" button calls the engine through the facade (the encounter's `chec
 
 ## Look and layout
 
-The look follows the aprutium-tavolo VTT: night-blue panels with gold and bronze (plus a
-parchment light theme), everything you press is a `.plaque` (bronze line, gold on hover, lit when
-chosen), section titles are gold small caps with a diamond and a fading rule (`Section`), slots and
-uses are gems, conditions are round medallions, icons are line drawings (`components/Icon.tsx`),
-never font glyphs. Fonts: Cinzel (logo), Cormorant Garamond (headings, lining figures), Source
-Sans 3 (text), self-hosted; text never below 13 px.
+The layout and UX follow the aprutium-tavolo VTT; the look is **Mat and Marker**, taken from the
+things on a real game table. The light theme, **Mat**, is the wet-erase battle mat with index
+cards on it; the dark one, **Felt**, is a card table's green felt for a dim room; the default
+follows the device. Each marker colour has one meaning everywhere (rail, map, log): **red** foes,
+damage and harmful areas; **blue** allies, the main action, the selection; **green** healing and
+what's still there; **purple** magic (zones, Concentration, rituals); **orange** what still needs
+doing (missing picks, pending decisions, warnings). The **highlighter** (`.hl`, `bg-hl`) marks
+only whose turn it is and what's chosen (the active tab, a lit button); don't spend it on
+anything else.
 
-- Colors are CSS variables in `src/styles.css` mapped to Tailwind tokens (`bg-panel`,
-  `text-gold`, `border-line`…); components use the tokens, never raw colors.
+- Buttons (`.btn`, `Button`) by weight: `primary` (blue fill: the one action that moves things
+  on), `normal` (outlined card), `danger` (red line), `ghost` (quiet). Disabled stays readable
+  (dashed outline, never faded) and an engine reason is shown next to it, not only on hover.
+- Shapes from the paper sheet and the table: slots and uses are tick boxes (`.tick`, ticked
+  through when spent), proficiency is a bubble (`.bubble`: empty, filled, ringed for Expertise),
+  an action's cost is a pip (`.pip`: ● Action, ○ Bonus Action, ▲ Reaction, ◆ others),
+  conditions are rings, an Initiative entry is an index card with a stripe in its side's colour.
+  Sides are coloured by `alliedSides` (`features/encounter/tableUi.ts`): the party's sides blue.
+- Type: one family, Atkinson Hyperlegible Next (self-hosted), drawn to tell 1/l/I and 0/O/8
+  apart; names, headings and numbers in bold, sentence case, no small caps or tracked capitals;
+  text never below 13 px. Icons are line drawings (`components/Icon.tsx`), never font glyphs.
+- Colors are CSS variables in `src/styles.css` mapped to Tailwind tokens (`bg-card`, `text-ink`,
+  `border-edge`, `stroke-grid`, `text-red`…); components use the tokens, never raw colors (the
+  map's SVG too: `fill-…`/`stroke-…` classes).
 - The encounter screen is the "table": the Initiative rail on the left, the map with its tool
   strip in the middle and the quick bar of options (tiles grouped by cost: Action, Bonus Action,
   Reaction, Free, Legendary, ★ favourites) below it, the GM's combat controls, the selection and

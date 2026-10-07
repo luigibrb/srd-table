@@ -44,7 +44,7 @@ function Attacks({ id, sheet }: { id: string; sheet: PlaySheet }) {
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="text-[13px] tracking-wider text-ink-muted uppercase">
+            <tr className="text-[13px] font-bold text-ink-muted">
               <th className="py-1 pr-2 font-normal">{t("sheet.attacks")}</th>
               <th className="py-1 pr-2 font-normal">{t("sheet.attackBonus")}</th>
               <th className="py-1 pr-2 font-normal">{t("sheet.damageCol")}</th>
@@ -53,7 +53,7 @@ function Attacks({ id, sheet }: { id: string; sheet: PlaySheet }) {
           </thead>
           <tbody>
             {sheet.attacks.map((a) => (
-              <tr key={a.name} className="border-t border-line align-top">
+              <tr key={a.name} className="border-t border-edge align-top">
                 <th scope="row" className="py-2 pr-2">
                   <span className="font-semibold">{a.name}</span>
                   <span className="block text-[13px] font-normal text-ink-muted">
@@ -71,7 +71,7 @@ function Attacks({ id, sheet }: { id: string; sheet: PlaySheet }) {
                     </span>
                   ))}
                   {a.riders.length > 0 && (
-                    <span className="block text-[13px] font-normal text-gold">
+                    <span className="block text-[13px] font-normal text-ink-muted">
                       {t("sheet.riders", { riders: a.riders.map((r) => r.name).join(", ") })}
                     </span>
                   )}
@@ -134,7 +134,7 @@ function FeatureActions({ id, sheet }: { id: string; sheet: PlaySheet }) {
           return (
             <li
               key={a.key}
-              className="flex flex-wrap items-center gap-2 rounded border border-line px-2 py-1.5"
+              className="flex flex-wrap items-center gap-2 rounded border border-edge px-2 py-1.5"
             >
               <span className="flex-1">
                 <span className="font-semibold">{a.name}</span>
@@ -187,7 +187,7 @@ function Toggles({ id, sheet }: { id: string; sheet: PlaySheet }) {
         {sheet.toggles.map((tg) => (
           <li
             key={tg.key}
-            className="flex items-center gap-2 rounded border border-line px-2 py-1.5"
+            className="flex items-center gap-2 rounded border border-edge px-2 py-1.5"
           >
             <span className="flex-1">
               <span className="font-semibold">{tg.name}</span>
@@ -237,7 +237,7 @@ function Uses({ id, sheet }: { id: string; sheet: PlaySheet }) {
               />
             ) : (
               <div className="flex items-center gap-2">
-                <Icon name="heart" size={16} className="text-bronze" />
+                <Icon name="heart" size={16} className="text-ink-muted" />
                 <span className="tabular-nums">
                   {t("common.left", { left: u.max - u.spent, total: u.max })}
                 </span>

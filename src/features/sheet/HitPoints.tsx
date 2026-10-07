@@ -43,7 +43,7 @@ export function HitPointsPanel({ id, sheet }: { id: string; sheet: PlaySheet }) 
         </div>
         <HpBar hp={play.hp.current} max={play.hp.max} temp={play.hp.temp} className="mt-1 mb-3" />
         {(play.dying || play.stable || play.dead) && (
-          <p className={cx("mb-2 font-semibold", play.dead ? "text-blood" : "text-gold")}>
+          <p className={cx("mb-2 font-semibold", play.dead ? "text-red" : "text-orange")}>
             {play.dead ? t("sheet.dead") : play.stable ? t("sheet.stable") : t("sheet.dying")}
           </p>
         )}
@@ -121,7 +121,7 @@ export function HitPointsPanel({ id, sheet }: { id: string; sheet: PlaySheet }) 
           </div>
         </form>
         {(play.dying || play.death_saves.successes > 0 || play.death_saves.failures > 0) && (
-          <div className="mt-3 space-y-1.5 border-t border-line pt-3">
+          <div className="mt-3 space-y-1.5 border-t border-edge pt-3">
             <h3 className="font-semibold">{t("sheet.deathSaves")}</h3>
             <div className="flex items-center gap-2 text-sm">
               <span className="w-20 text-ink-muted">{t("sheet.successes")}</span>
@@ -170,15 +170,15 @@ function ConditionsPanel({ id, sheet }: { id: string; sheet: PlaySheet }) {
           {play.conditions.map((c) => (
             <li key={c.id}>
               <span
-                className={cx("plaque plaque-sm", c.implied && "opacity-70")}
+                className={cx("btn btn-sm", c.implied && "opacity-70")}
                 title={c.description.split("\n")[0]}
               >
-                <ConditionMedal id={c.id} />
+                <ConditionMedal />
                 {c.name}
                 {!c.implied && (
                   <button
                     type="button"
-                    className="ml-1 text-ink-muted hover:text-blood"
+                    className="ml-1 text-ink-muted hover:text-red"
                     aria-label={`${t("common.remove")}: ${c.name}`}
                     disabled={busy}
                     onClick={() => void act({ type: "remove_condition", condition: c.id })}
@@ -231,7 +231,7 @@ function ConditionsPanel({ id, sheet }: { id: string; sheet: PlaySheet }) {
         <span className="flex items-center gap-2">
           {play.concentration ? (
             <>
-              <Icon name="concentration" size={16} className="text-violet" />
+              <Icon name="concentration" size={16} className="text-purple" />
               <span className="flex-1">{play.concentration}</span>
               <Button
                 size="sm"
@@ -265,29 +265,22 @@ function ConditionsPanel({ id, sheet }: { id: string; sheet: PlaySheet }) {
 }
 
 /** A condition as a round medallion (red when it hinders); the name is next to it or in a label. */
-export function ConditionMedal({
-  id,
-  size = 18,
-  label,
-}: {
-  id: string;
-  size?: number;
-  label?: string;
-}) {
-  const letters = id.slice(0, 2).toUpperCase();
-  const className =
-    "inline-flex flex-none items-center justify-center rounded-full border border-blood bg-blood-dim font-bold text-ink";
-  const style = { width: size, height: size, fontSize: Math.max(9, size * 0.45) };
-  if (label) {
-    return (
-      <span className={className} style={style} role="img" aria-label={label}>
-        {letters}
-      </span>
-    );
-  }
+/**
+ * A condition as a ring, like the coloured rings slipped onto a miniature: alone next to the
+ * condition's name, or as a chip with the name (`label`) where space is short.
+ */
+export function ConditionMedal({ label }: { label?: string }) {
+  const ring = (
+    <span
+      className="inline-block h-3 w-3 flex-none rounded-full border-[2.5px] border-red"
+      aria-hidden="true"
+    />
+  );
+  if (!label) return ring;
   return (
-    <span className={className} style={style} aria-hidden="true">
-      {letters}
+    <span className="inline-flex items-center gap-1 rounded-full border-[1.5px] border-red py-px pr-2 pl-1 text-[13px] leading-tight">
+      {ring}
+      {label}
     </span>
   );
 }
@@ -319,7 +312,7 @@ export function RestButtons({ id, sheet }: { id: string; sheet: PlaySheet }) {
           <>
             <Button onClick={close}>{t("common.cancel")}</Button>
             <Button
-              variant="gold"
+              variant="primary"
               icon={open === "long" ? "moon" : "hourglass"}
               disabled={busy}
               onClick={async () => {

@@ -1,101 +1,131 @@
 @import "tailwindcss";
 
-/* Self-hosted fonts (offline-friendly): Cinzel for the logo, Cormorant Garamond for headings,
-   Source Sans 3 for text. */
-@import "@fontsource/cinzel/600.css";
-@import "@fontsource/cinzel/700.css";
-@import "@fontsource/cormorant-garamond/500.css";
-@import "@fontsource/cormorant-garamond/600.css";
-@import "@fontsource/cormorant-garamond/700.css";
-@import "@fontsource/cormorant-garamond/500-italic.css";
-@import "@fontsource/source-sans-3/400.css";
-@import "@fontsource/source-sans-3/500.css";
-@import "@fontsource/source-sans-3/600.css";
-@import "@fontsource/source-sans-3/700.css";
-@import "@fontsource/source-sans-3/400-italic.css";
+/* One self-hosted family (offline-friendly), Atkinson Hyperlegible Next: drawn to be told apart
+   at a glance (1 l I, 0 O 8), which is what a number read across the table needs. */
+@import "@fontsource/atkinson-hyperlegible-next/400.css";
+@import "@fontsource/atkinson-hyperlegible-next/500.css";
+@import "@fontsource/atkinson-hyperlegible-next/700.css";
+@import "@fontsource/atkinson-hyperlegible-next/800.css";
+@import "@fontsource/atkinson-hyperlegible-next/400-italic.css";
 
-@custom-variant dark (&:where([data-theme="night"], [data-theme="night"] *));
+@custom-variant dark (&:where([data-theme="felt"], [data-theme="felt"] *));
 
-/* Colors are tokens: night (default) and parchment (light). Components use the Tailwind names
-   below (bg-panel, text-gold, border-line…), never raw colors. */
-:root,
-[data-theme="night"] {
-  --ground: #070a11;
-  --panel: #0e131d;
-  --panel-2: #151c2a;
-  --panel-3: #1c2536;
-  --line: #263042;
-  --line-strong: #3a4760;
-  --ink: #e8e3d6;
-  --ink-muted: #a9a394;
-  --ink-faint: #767264;
-  --gold: #c9a24a;
-  --gold-hi: #e2c375;
-  --bronze: #8a6a3a;
-  --plaque: #121826;
-  --plaque-lit: #2a2416;
-  --blood: #c0453a;
-  --blood-dim: #5a1f1a;
-  --green: #6fa84e;
-  --green-dim: #233a1c;
-  --blue: #5e8fc4;
-  --violet: #8c7cff;
-  --focus: #e2c375;
-  --shadow: 0 10px 30px rgb(0 0 0 / 0.45);
-  color-scheme: dark;
-}
-
-[data-theme="parchment"] {
-  --ground: #e9e1cf;
-  --panel: #f5efe0;
-  --panel-2: #ece2cb;
-  --panel-3: #e2d5b8;
-  --line: #cdbb94;
-  --line-strong: #a88f5e;
-  --ink: #2e2116;
-  --ink-muted: #5c4a35;
-  --ink-faint: #8a775c;
-  --gold: #8a5d1d;
-  --gold-hi: #6e4710;
-  --bronze: #a88452;
-  --plaque: #efe6d1;
-  --plaque-lit: #e4cf9c;
-  --blood: #a3322a;
-  --blood-dim: #f0cfc6;
-  --green: #4d7f34;
-  --green-dim: #d8e8c9;
-  --blue: #3d6a9c;
-  --violet: #5b4bc4;
-  --focus: #8a5d1d;
-  --shadow: 0 10px 30px rgb(60 40 10 / 0.18);
+/* "Mat and Marker": the things on a real game table. Mat (light, default) is the wet-erase battle
+   mat and its index cards; Felt (dark) is the green felt of a card table, for a dim room; the
+   "system" setting follows the device. Each marker colour has one meaning everywhere: red foes
+   and damage, blue allies and the main action, green healing and what's still there, purple
+   magic (zones, Concentration), orange what still needs doing. The highlighter marks only
+   whose turn it is and what's chosen. Components use the Tailwind names below (bg-card,
+   text-ink, border-edge…), never raw colours. */
+:root {
+  --mat: #e5e9e3;
+  --card: #fbfbf8;
+  --card-2: #eff2ec;
+  --card-3: #e2e7df;
+  --edge: #c9d0c8;
+  --edge-strong: #949f96;
+  --grid: #aebdcb;
+  --ink: #23262a;
+  --ink-muted: #50575e;
+  --ink-faint: #656c73;
+  --red: #b92b23;
+  --red-dim: #f6dcd8;
+  --green: #276f43;
+  --green-dim: #d7ebdc;
+  --blue: #1d52a3;
+  --blue-dim: #dbe5f5;
+  --purple: #6b3fa3;
+  --orange: #a84a07;
+  --hl: #f6da3c;
+  --hl-ink: #23262a;
+  --focus: #1d52a3;
+  --shadow-card: 0 1px 0 #c3cabf, 0 2px 0 #d6dbd3;
+  --shadow: 0 12px 32px rgb(20 35 28 / 0.2);
   color-scheme: light;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="mat"]) {
+    --mat: #13201b;
+    --card: #1b2924;
+    --card-2: #22332d;
+    --card-3: #2a3d36;
+    --edge: #2f4239;
+    --edge-strong: #4f675c;
+    --grid: #3a5046;
+    --ink: #e3e8e1;
+    --ink-muted: #a7b3ac;
+    --ink-faint: #8a978f;
+    --red: #f06b5f;
+    --red-dim: #4a1f1c;
+    --green: #6dca8d;
+    --green-dim: #1d3a28;
+    --blue: #84abf2;
+    --blue-dim: #1f3150;
+    --purple: #b99cf0;
+    --orange: #f0a050;
+    --hl: #f0d64a;
+    --hl-ink: #1a1c12;
+    --focus: #f0d64a;
+    --shadow-card: 0 1px 0 #0b1310, 0 2px 0 #0e1814;
+    --shadow: 0 12px 32px rgb(0 0 0 / 0.5);
+    color-scheme: dark;
+  }
+}
+
+[data-theme="felt"] {
+  --mat: #13201b;
+  --card: #1b2924;
+  --card-2: #22332d;
+  --card-3: #2a3d36;
+  --edge: #2f4239;
+  --edge-strong: #4f675c;
+  --grid: #3a5046;
+  --ink: #e3e8e1;
+  --ink-muted: #a7b3ac;
+  --ink-faint: #8a978f;
+  --red: #f06b5f;
+  --red-dim: #4a1f1c;
+  --green: #6dca8d;
+  --green-dim: #1d3a28;
+  --blue: #84abf2;
+  --blue-dim: #1f3150;
+  --purple: #b99cf0;
+  --orange: #f0a050;
+  --hl: #f0d64a;
+  --hl-ink: #1a1c12;
+  --focus: #f0d64a;
+  --shadow-card: 0 1px 0 #0b1310, 0 2px 0 #0e1814;
+  --shadow: 0 12px 32px rgb(0 0 0 / 0.5);
+  color-scheme: dark;
+}
+
 @theme inline {
-  --color-ground: var(--ground);
-  --color-panel: var(--panel);
-  --color-panel-2: var(--panel-2);
-  --color-panel-3: var(--panel-3);
-  --color-line: var(--line);
-  --color-line-strong: var(--line-strong);
+  --color-mat: var(--mat);
+  --color-card: var(--card);
+  --color-card-2: var(--card-2);
+  --color-card-3: var(--card-3);
+  --color-edge: var(--edge);
+  --color-edge-strong: var(--edge-strong);
+  --color-grid: var(--grid);
   --color-ink: var(--ink);
   --color-ink-muted: var(--ink-muted);
   --color-ink-faint: var(--ink-faint);
-  --color-gold: var(--gold);
-  --color-gold-hi: var(--gold-hi);
-  --color-bronze: var(--bronze);
-  --color-plaque: var(--plaque);
-  --color-plaque-lit: var(--plaque-lit);
-  --color-blood: var(--blood);
-  --color-blood-dim: var(--blood-dim);
+  --color-red: var(--red);
+  --color-red-dim: var(--red-dim);
   --color-green: var(--green);
   --color-green-dim: var(--green-dim);
   --color-blue: var(--blue);
-  --color-violet: var(--violet);
-  --font-logo: "Cinzel", Georgia, serif;
-  --font-display: "Cormorant Garamond", Georgia, serif;
-  --font-sans: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --color-blue-dim: var(--blue-dim);
+  --color-purple: var(--purple);
+  --color-orange: var(--orange);
+  --color-hl: var(--hl);
+  --color-hl-ink: var(--hl-ink);
+  --color-focus: var(--focus);
+  --font-display: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
+  --font-sans: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
   --shadow-panel: var(--shadow);
+  --shadow-card: var(--shadow-card);
 }
 
 @layer base {
@@ -105,11 +135,12 @@
     height: 100%;
   }
   body {
-    background: var(--ground);
+    background: var(--mat);
     color: var(--ink);
     font-family: var(--font-sans);
     font-size: 16px;
     line-height: 1.45;
+    font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
   }
   /* Text never goes below 13px (readability at the table). */
@@ -123,113 +154,87 @@
   }
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--line-strong) transparent;
+    scrollbar-color: var(--edge-strong) transparent;
   }
-  button:disabled {
+  button:disabled,
+  [aria-disabled="true"] {
     cursor: not-allowed;
   }
-  /* Cormorant's old-style figures make stats uneven: numbers line up instead. */
-  .font-display,
-  .section-title {
-    font-variant-numeric: lining-nums;
+  /* Names, headings and numbers: bold, sentence case. */
+  .font-display {
+    font-weight: 700;
   }
 }
 
 @layer components {
-  /* A panel section: card with a gold small-caps title, a diamond and a fading rule. */
+  /* An index card on the mat. */
   .panel {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 10px;
+    background: var(--card);
+    border: 1px solid var(--edge);
+    border-radius: 4px;
+    box-shadow: var(--shadow-card);
   }
   .section-title {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
     font-family: var(--font-display);
-    font-variant: small-caps;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    font-size: 1.15rem;
-    color: var(--gold);
-  }
-  .section-title::before {
-    content: "";
-    width: 7px;
-    height: 7px;
-    flex: none;
-    transform: rotate(45deg);
-    background: var(--gold);
-  }
-  .section-title::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    min-width: 1rem;
-    background: linear-gradient(to right, var(--line-strong), transparent);
+    font-weight: 700;
+    font-size: 1.05rem;
+    line-height: 1.3;
+    color: var(--ink);
   }
 
-  /* The one language of everything you press: a dark plaque with a bronze line, gold on hover,
-     lit when chosen. */
-  .plaque {
+  /* Everything you press. Weight comes from the fill: primary (blue marker), normal (outlined
+     card), danger (red line), and the ghost variant for quiet controls. Chosen = highlighted. */
+  .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.45rem;
     min-height: 2.25rem;
     padding: 0.35rem 0.85rem;
-    border: 1px solid var(--line-strong);
-    border-radius: 6px;
-    background: var(--plaque);
+    border: 1.5px solid var(--edge-strong);
+    border-radius: 4px;
+    background: var(--card);
     color: var(--ink);
-    font-weight: 500;
+    font-weight: 700;
     transition:
-      border-color 0.12s,
-      color 0.12s,
-      background 0.12s;
+      border-color 0.1s,
+      background 0.1s;
   }
-  .plaque svg {
-    color: var(--bronze);
+  /* Icons take the button's colour. */
+  .btn:hover:not(:disabled, [aria-disabled="true"]) {
+    border-color: var(--ink);
+    background: var(--card-2);
   }
-  .plaque.plaque-gold svg {
-    color: #1b1408;
+  .btn[data-on="true"],
+  .btn[data-on="true"]:hover:not(:disabled) {
+    border-color: var(--ink);
+    background: var(--hl);
+    color: var(--hl-ink);
   }
-  .plaque.plaque-danger,
-  .plaque.plaque-danger svg {
-    border-color: var(--blood);
-    color: var(--blood);
+  .btn.btn-primary {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: var(--card);
   }
-  .plaque[data-on="true"] {
-    border-color: var(--gold);
-    background: var(--plaque-lit);
-    color: var(--gold-hi);
-    box-shadow: inset 0 0 0 1px rgb(201 162 74 / 0.25);
-  }
-  .plaque:hover:not(:disabled) {
-    border-color: var(--gold);
-    color: var(--gold-hi);
-  }
-  .plaque[data-on="true"] svg,
-  .plaque:hover:not(:disabled) svg {
-    color: var(--gold-hi);
-  }
-  .plaque:disabled {
-    opacity: 0.45;
-  }
-  .plaque.plaque-gold {
-    background: linear-gradient(to bottom, var(--gold-hi), var(--gold));
-    color: #1b1408;
-    border-color: var(--gold);
-    font-weight: 600;
-  }
-  .plaque.plaque-gold:hover:not(:disabled) {
-    color: #1b1408;
+  .btn.btn-primary:hover:not(:disabled, [aria-disabled="true"]) {
+    background: var(--blue);
+    border-color: var(--ink);
     filter: brightness(1.08);
   }
-  .plaque.plaque-gold:hover:not(:disabled) svg {
-    color: #1b1408;
+  .btn.btn-danger {
+    border-color: var(--red);
+    color: var(--red);
   }
-  .plaque-sm {
+  /* Disabled stays readable: a dashed outline instead of fading the label away. */
+  .btn:disabled,
+  .btn[aria-disabled="true"] {
+    border-style: dashed;
+    border-color: var(--edge-strong);
+    background: transparent;
+    color: var(--ink-muted);
+    filter: none;
+  }
+  .btn-sm {
     min-height: 1.85rem;
     padding: 0.2rem 0.55rem;
     font-size: 14px;
@@ -239,27 +244,88 @@
     width: 100%;
     min-height: 2.25rem;
     padding: 0.3rem 0.6rem;
-    border: 1px solid var(--line-strong);
-    border-radius: 6px;
-    background: var(--panel-2);
+    border: 1.5px solid var(--edge-strong);
+    border-radius: 4px;
+    background: var(--card);
     color: var(--ink);
   }
+  .field::placeholder {
+    color: var(--ink-faint);
+  }
   .field:focus {
-    border-color: var(--gold);
+    border-color: var(--focus);
     outline: none;
   }
 
-  /* A gem: one spell slot or use (filled = available). */
-  .gem {
-    width: 0.85rem;
-    height: 0.85rem;
-    transform: rotate(45deg);
-    border: 1px solid var(--gold);
-    background: radial-gradient(circle at 35% 35%, var(--gold-hi), var(--gold));
+  /* A tick box: one spell slot or use, ticked through once spent (as on the paper sheet). */
+  .tick {
+    position: relative;
+    width: 1.1rem;
+    height: 1.1rem;
+    border: 1.5px solid var(--ink);
+    border-radius: 3px;
+    background: var(--card);
   }
-  .gem[data-spent="true"] {
+  .tick[data-spent="true"]::after {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    background: linear-gradient(to top right, transparent 42%, var(--ink) 42% 58%, transparent 58%);
+  }
+
+  /* Proficiency bubbles, as on the paper sheet: empty, filled (proficient), ringed (Expertise). */
+  .bubble {
+    display: inline-block;
+    width: 0.6rem;
+    height: 0.6rem;
+    flex: none;
+    border-radius: 50%;
+    border: 1.5px solid var(--ink-faint);
+  }
+  .bubble[data-level="proficient"] {
+    border-color: var(--ink);
+    background: var(--ink);
+  }
+  .bubble[data-level="expertise"] {
+    border-color: var(--ink);
+    background: var(--ink);
+    box-shadow:
+      0 0 0 2px var(--card),
+      0 0 0 3.5px var(--ink);
+  }
+
+  /* An action's cost, by shape: Action ●, Bonus Action ○, Reaction ▲, others ◆. */
+  .pip {
+    display: inline-block;
+    width: 0.7rem;
+    height: 0.7rem;
+    flex: none;
+    background: currentColor;
+    border-radius: 50%;
+  }
+  .pip[data-cost="bonus_action"] {
     background: transparent;
-    border-color: var(--line-strong);
+    border: 2px solid currentColor;
+  }
+  .pip[data-cost="reaction"] {
+    border-radius: 0;
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  }
+  .pip[data-cost="free"],
+  .pip[data-cost="legendary"],
+  .pip[data-cost="favorites"] {
+    border-radius: 1px;
+    transform: rotate(45deg) scale(0.85);
+  }
+
+  /* The highlighter: whose turn it is, what is chosen. Nothing else. */
+  .hl {
+    background: linear-gradient(100deg, transparent 0 2%, var(--hl) 3% 96%, transparent 98%);
+    color: var(--hl-ink);
+    padding: 0 0.3em;
+    border-radius: 2px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
   }
 
   .prose-srd p + p {
@@ -283,5 +349,8 @@
 @media (prefers-reduced-motion: reduce) {
   .rise-in {
     animation: none;
+  }
+  .btn {
+    transition: none;
   }
 }

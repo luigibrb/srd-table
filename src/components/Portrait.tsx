@@ -32,8 +32,8 @@ export function Portrait({
   return (
     <div
       className={cx(
-        "flex flex-none items-center justify-center overflow-hidden border border-bronze bg-panel-3 font-logo text-gold",
-        round ? "rounded-full" : "rounded-lg",
+        "flex flex-none items-center justify-center overflow-hidden border border-edge-strong bg-card-3 font-display text-ink",
+        round ? "rounded-full" : "rounded",
         className,
       )}
       style={{ width: size, height: size, fontSize: size * 0.34 }}

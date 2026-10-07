@@ -153,13 +153,21 @@ fact (dice-box-threejs accepts predetermined results).
 
 ## Look and language
 
-- **Look**: night-blue panels with gold and bronze (a parchment light theme too), inspired by the
-  aprutium-tavolo VTT. Colors are CSS variables mapped to Tailwind tokens (`bg-panel`, `text-gold`…)
-  in `src/styles.css`; components use the tokens, never raw colors. Shared pieces: `.plaque`
-  (everything you press: bronze line, gold on hover, lit when chosen), `.section-title` (gold
-  small caps, a diamond and a fading rule), `.gem` (slots and uses), condition medallions.
-- **Fonts**: Cinzel (logo), Cormorant Garamond (headings, with lining figures), Source Sans 3
-  (text), self-hosted through `@fontsource`. Text never goes below 13 px.
+- **Look**: "Mat and Marker" (2026-10-07), replacing the first night-blue-and-gold look: the
+  layout and UX stay those of the aprutium-tavolo VTT, the style comes from a real game table.
+  Mat (light: the wet-erase battle mat, index cards) and Felt (dark: card-table felt) themes, and
+  `system` follows the device (the CSS falls back on `prefers-color-scheme`; older settings'
+  `parchment`/`night` read as `mat`/`felt`). Gold had become every accent at once (titles,
+  names, the turn, chosen buttons, proficiency) and the diamond every marker, so neither said
+  anything; now each marker colour has one meaning (red foes and damage, blue allies and the main
+  action, green healing, purple magic, orange to-do) and the highlighter marks only the turn and
+  what's chosen. Colors are CSS variables mapped to Tailwind tokens (`bg-card`, `text-ink`…) in
+  `src/styles.css`; components use the tokens, never raw colors. Shared pieces: `.btn` (primary,
+  normal, danger; disabled stays readable), `.section-title`, `.tick` (slots and uses),
+  `.bubble` (proficiency), `.pip` (an action's cost), `.hl` (the highlighter).
+- **Fonts**: one family, Atkinson Hyperlegible Next (400–800), self-hosted through `@fontsource`:
+  designed for legibility, it keeps 1/l/I and 0/O/8 apart for numbers read across the table.
+  Cormorant's thin strokes were the weakest part of the HP display. Text never goes below 13 px.
 - **Icons**: line drawings in `components/Icon.tsx` (24×24, stroke 1.8), never font glyphs.
 - **Language**: the app's words are in `src/i18n/en.ts` (`t`, `tn` with `Intl.PluralRules`,
   `Intl.NumberFormat`, `Intl.ListFormat`); another language is one more catalog. Engine strings
@@ -172,7 +180,7 @@ The runtime list of CLAUDE.md, plus these, each for a reason:
 | Package | Why |
 |---|---|
 | `@tanstack/react-virtual` | Long lists are virtualized (spells, monsters, items, the Compendium); same family as Router and Query, no styles. |
-| `@fontsource/cinzel`, `@fontsource/cormorant-garamond`, `@fontsource/source-sans-3` | Self-hosted fonts (offline use, no third-party requests). Only CSS and font files. |
+| `@fontsource/atkinson-hyperlegible-next` | Self-hosted font (offline use, no third-party requests). Only CSS and font files. |
 | `zod` (direct) | The engine's own Zod (deduplicated by Vite): the worker uses `z.prettifyError` to turn a document that doesn't parse into readable reasons. |
 
 Radix UI comes as the single `radix-ui` package.

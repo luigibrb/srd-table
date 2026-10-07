@@ -59,7 +59,7 @@ export function usePreviewedEdit(characterId: string): PreviewedEdit {
         <>
           <Button onClick={() => close(null)}>{t("common.cancel")}</Button>
           <Button
-            variant="gold"
+            variant="primary"
             icon="check"
             onClick={async () => {
               if (!pending) return;
@@ -91,7 +91,7 @@ function PreviewBody({ preview }: { preview: ChangePreview }) {
           <p className="mb-1 font-semibold">{t("builder.previewRemoved")}</p>
           <ul className="space-y-1">
             {preview.removed.map((r) => (
-              <li key={r.key} className="rounded border border-blood/50 bg-blood-dim/30 px-2 py-1">
+              <li key={r.key} className="rounded border border-red/50 bg-red-dim/30 px-2 py-1">
                 <span className="text-ink-muted">
                   {t("builder.levelOf", { level: r.level })} ·{" "}
                 </span>

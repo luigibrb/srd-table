@@ -13,7 +13,7 @@ import { useSettings } from "./store/settings";
 const root = createRoot(document.getElementById("root") as HTMLElement);
 root.render(
   <div
-    className="flex h-full items-center justify-center font-display text-2xl text-gold"
+    className="flex h-full items-center justify-center font-display text-2xl text-ink"
     role="status"
   >
     {t("app.loading")}
@@ -42,7 +42,7 @@ async function start() {
 
 start().catch((error: unknown) => {
   root.render(
-    <div className="p-6 text-blood" role="alert">
+    <div className="p-6 text-red" role="alert">
       {t("errors.engine", { message: error instanceof Error ? error.message : String(error) })}
     </div>,
   );

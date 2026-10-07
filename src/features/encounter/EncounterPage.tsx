@@ -19,6 +19,7 @@ import { CombatLog } from "./CombatLog";
 import { CombatPanel } from "./CombatPanel";
 import { DecisionDialog } from "./DecisionDialog";
 import { InitiativeRail } from "./InitiativeRail";
+import { OffMapNotice } from "./OffMapNotice";
 import { QuickBar } from "./QuickBar";
 import { SelectionPanel } from "./SelectionPanel";
 import { useTableUi } from "./tableUi";
@@ -29,7 +30,7 @@ export function EncounterPage({ id }: { id: string }) {
     return (
       <Empty icon="table">
         {t("errors.documentGone")}{" "}
-        <Link to="/encounters" className="text-gold underline">
+        <Link to="/encounters" className="text-blue underline">
           {t("encounters.title")}
         </Link>
       </Empty>
@@ -81,7 +82,7 @@ function Table({ record }: { record: EncounterRecord }) {
   const pendingWho = pending ? view?.combatants.find((c) => c.id === pending.combatant) : undefined;
 
   if (error)
-    return <div className="p-6 text-blood">{t("errors.engine", { message: error.message })}</div>;
+    return <div className="p-6 text-red">{t("errors.engine", { message: error.message })}</div>;
   if (!view) {
     return (
       <div className="p-6">
@@ -99,7 +100,7 @@ function Table({ record }: { record: EncounterRecord }) {
           </label>
           <input
             id="encounter-name"
-            className="w-full bg-transparent font-display text-xl font-semibold text-gold outline-none [font-variant:small-caps] focus:border-b focus:border-gold"
+            className="w-full bg-transparent font-display text-xl text-ink outline-none focus:border-b focus:border-focus"
             value={name}
             readOnly={!gm}
             onChange={(e) => setName(e.target.value)}
@@ -156,6 +157,7 @@ function Table({ record }: { record: EncounterRecord }) {
             canAnswer={gm || (pendingWho ? mine(pendingWho) : false)}
           />
         )}
+        {actor && <OffMapNotice view={view} actor={actor} gm={gm} />}
         {!pending && actor && options.data && composing && (
           <ActionComposer
             key={composing.label}

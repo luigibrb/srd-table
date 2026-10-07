@@ -20,14 +20,14 @@ export function FeaturesTab({ id, sheet }: { id: string; sheet: PlaySheet }) {
             {sheet.resources.map((r) => (
               <div
                 key={`${r.class_id}|${r.name}`}
-                className="rounded border border-line bg-panel-2 px-3 py-1.5"
+                className="rounded border border-edge bg-card-2 px-3 py-1.5"
               >
                 <dt className="text-[13px] text-ink-muted">{r.name}</dt>
                 <dd className="font-display text-xl font-bold">{r.value}</dd>
               </div>
             ))}
             {sheet.weapon_masteries.length > 0 && (
-              <div className="rounded border border-line bg-panel-2 px-3 py-1.5 sm:col-span-3">
+              <div className="rounded border border-edge bg-card-2 px-3 py-1.5 sm:col-span-3">
                 <dt className="text-[13px] text-ink-muted">{t("compendium.table.masteries")}</dt>
                 <dd>{sheet.weapon_masteries.map(masteryName).join(", ")}</dd>
               </div>
@@ -44,7 +44,7 @@ export function FeaturesTab({ id, sheet }: { id: string; sheet: PlaySheet }) {
         <ul className="space-y-2">
           {sheet.traits.map((trait) => (
             <li key={`${trait.source}|${trait.name}`}>
-              <details className="rounded border border-line px-3 py-2 open:border-line-strong">
+              <details className="rounded border border-edge px-3 py-2 open:border-edge-strong">
                 <summary className="cursor-pointer">
                   <span className="font-semibold">{trait.name}</span>
                   <span className="ml-2 text-[13px] text-ink-muted">

@@ -41,7 +41,7 @@ export function EncountersPage() {
         <div className="flex-1">
           <PageTitle sub={t("encounters.sub")}>{t("encounters.title")}</PageTitle>
         </div>
-        <Button variant="gold" icon="plus" onClick={() => void onCreate()}>
+        <Button variant="primary" icon="plus" onClick={() => void onCreate()}>
           {t("encounters.new")}
         </Button>
         <Button icon="upload" onClick={() => input.current?.click()}>
@@ -81,12 +81,12 @@ function EncounterRow({ record }: { record: EncounterRecord }) {
   const { encounter } = record;
   return (
     <article className="panel flex flex-wrap items-center gap-3 p-3">
-      <Icon name="swords" size={26} className="text-bronze" />
+      <Icon name="swords" size={26} className="text-ink-muted" />
       <div className="min-w-0 flex-1">
         <Link
           to="/encounters/$id"
           params={{ id: record.id }}
-          className="font-display text-xl font-semibold text-gold hover:text-gold-hi [font-variant:small-caps]"
+          className="font-display text-xl text-ink hover:text-ink"
         >
           {record.name}
         </Link>
@@ -100,7 +100,7 @@ function EncounterRow({ record }: { record: EncounterRecord }) {
           {encounter.combatants.map((c) => c.name).join(", ")}
         </p>
       </div>
-      <Link to="/encounters/$id" params={{ id: record.id }} className="plaque plaque-sm">
+      <Link to="/encounters/$id" params={{ id: record.id }} className="btn btn-sm">
         <Icon name="play" size={16} />
         {t("common.open")}
       </Link>

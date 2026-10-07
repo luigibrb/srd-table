@@ -32,11 +32,11 @@ function RollButton({
     <button
       type="button"
       onClick={() => onRoll(label, bonus)}
-      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-semibold tabular-nums hover:bg-panel-3 hover:text-gold-hi"
+      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-semibold tabular-nums hover:bg-card-3 hover:text-ink"
       aria-label={`${label} ${signed(bonus)}: ${t("dice.rollButton")}`}
     >
       {signed(bonus)}
-      <Icon name="d20" size={14} className="text-bronze" />
+      <Icon name="d20" size={14} className="text-ink-muted" />
     </button>
   );
 }
@@ -50,7 +50,7 @@ export function OverviewTab({ id, sheet }: { id: string; sheet: PlaySheet }) {
       <Section title={t("sheet.abilities")}>
         <table className="w-full text-left">
           <thead>
-            <tr className="text-[13px] tracking-wider text-ink-muted uppercase">
+            <tr className="text-[13px] font-bold text-ink-muted">
               <th className="py-1 font-normal">{t("sheet.abilities")}</th>
               <th className="py-1 text-center font-normal">{t("builder.final")}</th>
               <th className="py-1 font-normal">{t("sheet.abilities")}</th>
@@ -61,7 +61,7 @@ export function OverviewTab({ id, sheet }: { id: string; sheet: PlaySheet }) {
             {abilities().map((a) => {
               const save = sheet.saving_throws[a];
               return (
-                <tr key={a} className="border-t border-line">
+                <tr key={a} className="border-t border-edge">
                   <th scope="row" className="py-1 font-semibold">
                     {abilityName(a)}
                   </th>
@@ -78,11 +78,8 @@ export function OverviewTab({ id, sheet }: { id: string; sheet: PlaySheet }) {
                   <td className="py-1">
                     <span className="flex items-center gap-1">
                       <span
-                        className={
-                          save.proficient
-                            ? "h-2 w-2 rotate-45 bg-gold"
-                            : "h-2 w-2 rotate-45 border border-line-strong"
-                        }
+                        className="bubble"
+                        data-level={save.proficient ? "proficient" : undefined}
                         aria-hidden="true"
                       />
                       <RollButton
@@ -108,14 +105,11 @@ export function OverviewTab({ id, sheet }: { id: string; sheet: PlaySheet }) {
       <Section title={t("sheet.skills")}>
         <ul className="grid gap-x-4 sm:grid-cols-2">
           {sheet.skills.map((s) => (
-            <li key={s.skill} className="flex items-center gap-2 border-b border-line/60 py-0.5">
+            <li key={s.skill} className="flex items-center gap-2 border-b border-edge/60 py-0.5">
               <span
-                className={
-                  s.expertise
-                    ? "h-2 w-2 rotate-45 bg-gold-hi ring-2 ring-gold/40"
-                    : s.proficient_from
-                      ? "h-2 w-2 rotate-45 bg-gold"
-                      : "h-2 w-2 rotate-45 border border-line-strong"
+                className="bubble"
+                data-level={
+                  s.expertise ? "expertise" : s.proficient_from ? "proficient" : undefined
                 }
                 title={s.proficient_from ?? undefined}
                 aria-hidden="true"

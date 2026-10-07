@@ -63,7 +63,7 @@ export function AbilitiesStep({
           <p className="mt-2 text-sm text-ink-muted">{abilities.rolled_pool.join(" · ")}</p>
         )}
         {abilities.point_buy && (
-          <p className="mt-2 font-semibold text-gold">
+          <p className="mt-2 font-semibold text-orange">
             {t("builder.pointsLeft", {
               remaining: abilities.point_buy.remaining,
               budget: abilities.point_buy.budget,
@@ -76,7 +76,7 @@ export function AbilitiesStep({
         <Section title={t("sheet.abilities")}>
           <table className="w-full text-left">
             <thead>
-              <tr className="text-[13px] tracking-wider text-ink-muted uppercase">
+              <tr className="text-[13px] font-bold text-ink-muted">
                 <th className="py-1 font-normal">{t("sheet.abilities")}</th>
                 <th className="py-1 font-normal">{t("builder.base")}</th>
                 <th className="py-1 font-normal">{t("builder.backgroundBonus")}</th>
@@ -85,7 +85,7 @@ export function AbilitiesStep({
             </thead>
             <tbody>
               {abilityIds().map((a) => (
-                <tr key={a} className="border-t border-line">
+                <tr key={a} className="border-t border-edge">
                   <th scope="row" className="py-1.5 pr-2 font-semibold">
                     {abilityName(a)}
                   </th>
@@ -117,7 +117,7 @@ export function AbilitiesStep({
               <span className="text-sm text-ink-muted">{t("builder.backgroundBonusHint")}</span>
               <Button
                 size="sm"
-                variant="gold"
+                variant="primary"
                 icon="check"
                 disabled={sameBonus(bonusDraft, build.background_bonus)}
                 onClick={() => void run({ type: "background_bonus", bonus: bonusDraft })}

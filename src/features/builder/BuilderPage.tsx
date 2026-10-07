@@ -29,14 +29,14 @@ export function BuilderPage({ id, search }: { id: string; search: BuilderSearch 
     return (
       <Empty icon="sheet">
         {t("errors.documentGone")}{" "}
-        <Link to="/characters" className="text-gold underline">
+        <Link to="/characters" className="text-blue underline">
           {t("nav.characters")}
         </Link>
       </Empty>
     );
   }
   if (error)
-    return <div className="p-6 text-blood">{t("errors.engine", { message: error.message })}</div>;
+    return <div className="p-6 text-red">{t("errors.engine", { message: error.message })}</div>;
   if (!view)
     return (
       <div className="p-6">
@@ -67,7 +67,7 @@ function Builder({ id, view, search }: { id: string; view: BuildView; search: Bu
   return (
     <div className="mx-auto max-w-[1500px] p-3 sm:p-5">
       <header className="mb-3 flex flex-wrap items-center gap-2">
-        <h1 className="mr-2 font-display text-3xl font-semibold text-gold [font-variant:small-caps]">
+        <h1 className="mr-2 font-display text-3xl text-ink">
           {name}
           <span className="ml-3 align-middle text-base font-normal text-ink-muted [font-variant:normal]">
             {t("builder.title")} · {t("common.level", { level: view.level })}
@@ -90,7 +90,7 @@ function Builder({ id, view, search }: { id: string; view: BuildView; search: Bu
             disabled={!redoable}
             onClick={() => redo(id)}
           />
-          <Link to="/characters/$id/sheet" params={{ id }} search={{}} className="plaque plaque-sm">
+          <Link to="/characters/$id/sheet" params={{ id }} search={{}} className="btn btn-sm">
             <Icon name="sheet" size={16} />
             {t("builder.goSheet")}
           </Link>
@@ -113,13 +113,13 @@ function Builder({ id, view, search }: { id: string; view: BuildView; search: Bu
               {l.level}
               {!l.complete && (
                 <>
-                  <span className="h-1.5 w-1.5 rotate-45 bg-gold" aria-hidden="true" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-orange" aria-hidden="true" />
                   <span className="sr-only">{t("builder.missing")}</span>
                 </>
               )}
             </Button>
           ))}
-        <Button size="sm" variant="gold" icon="levelUp" onClick={() => setLevelUpOpen(true)}>
+        <Button size="sm" variant="primary" icon="levelUp" onClick={() => setLevelUpOpen(true)}>
           {t("builder.levelUp")}
         </Button>
         <RemoveLevelButton view={view} request={(e) => request(e)} />
@@ -187,8 +187,8 @@ function StepNav({
                 onClick={() => onStep(s.step)}
                 aria-current={s.step === step ? "step" : undefined}
                 className={cx(
-                  "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-panel-2",
-                  s.step === step && "bg-plaque-lit text-gold-hi",
+                  "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-card-2",
+                  s.step === step && "bg-hl text-hl-ink",
                 )}
               >
                 <span className="w-5 text-right text-[13px] text-ink-faint tabular-nums">
@@ -198,10 +198,13 @@ function StepNav({
                 {s.complete ? (
                   <Icon name="check" size={16} className="text-green" />
                 ) : errors ? (
-                  <Icon name="warning" size={16} className="text-blood" />
+                  <Icon name="warning" size={16} className="text-red" />
                 ) : (
                   <>
-                    <span className="h-2 w-2 rotate-45 border border-gold" aria-hidden="true" />
+                    <span
+                      className="h-2.5 w-2.5 rounded-full border-2 border-orange"
+                      aria-hidden="true"
+                    />
                     <span className="sr-only">{t("builder.missing")}</span>
                   </>
                 )}
@@ -230,9 +233,7 @@ function StepContent({
   const { build } = view;
   return (
     <>
-      <h2 className="font-display text-2xl font-semibold text-gold [font-variant:small-caps]">
-        {info?.title}
-      </h2>
+      <h2 className="font-display text-2xl text-ink">{info?.title}</h2>
       {info && info.issues.length > 0 && (
         <ul aria-label={t("builder.missing")} className="space-y-0.5 text-sm">
           {info.issues.map((i) => (
@@ -241,10 +242,10 @@ function StepContent({
               className={cx(
                 "flex gap-2",
                 i.severity === "error"
-                  ? "text-blood"
+                  ? "text-red"
                   : i.severity === "note"
                     ? "text-ink-muted"
-                    : "text-gold",
+                    : "text-orange",
               )}
             >
               <Icon
@@ -320,7 +321,7 @@ function StepFooter({
         <span />
       )}
       {next && (
-        <Button variant="gold" onClick={() => onStep(next.step)}>
+        <Button variant="primary" onClick={() => onStep(next.step)}>
           {next.title}
           <span aria-hidden="true">›</span>
         </Button>

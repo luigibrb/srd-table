@@ -49,10 +49,10 @@ export function CombatLog({
               className={cx(
                 "rounded border-l-2 py-0.5 pl-2",
                 entry.tone === "decision"
-                  ? "border-gold bg-plaque-lit/40"
+                  ? "border-orange bg-card-2"
                   : entry.tone === "refusal"
-                    ? "border-blood"
-                    : "border-line-strong",
+                    ? "border-red"
+                    : "border-edge-strong",
               )}
             >
               {entry.round > 0 && (
@@ -61,7 +61,7 @@ export function CombatLog({
                 </span>
               )}
               {entry.tone === "decision" && (
-                <Icon name="hourglass" size={14} className="mr-1 inline text-gold" />
+                <Icon name="hourglass" size={14} className="mr-1 inline text-orange" />
               )}
               {entry.lines.map((line, i) => (
                 <span key={i} className="block">

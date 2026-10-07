@@ -1,7 +1,8 @@
 /**
  * The GM's controls for the fight: add monsters and characters, roll or set Initiative, start,
  * next turn, end; and the encounter's decision mode. Every control is an encounter action; a
- * refusal shows here.
+ * refusal shows here. A combatant added while the map is in use is selected with the Place tool
+ * on, so the next click on the map puts it there.
  */
 
 import { useMemo, useState } from "react";
@@ -14,6 +15,17 @@ import { t } from "@/i18n";
 import { useTable } from "@/queries";
 import { type EncounterRecord, useDocuments } from "@/store/documents";
 import { useSettings } from "@/store/settings";
+import { useTableUi } from "./tableUi";
+
+/** After an add: if someone stands on the map, get the first newcomer placed next. */
+function placeNewcomer(encounterId: string, before: readonly string[]) {
+  const after = useDocuments.getState().encounters[encounterId]?.encounter.combatants ?? [];
+  const newcomer = after.find((c) => !before.includes(c.id) && !c.position);
+  if (!newcomer || !after.some((c) => c.position)) return;
+  const ui = useTableUi.getState();
+  ui.select(newcomer.id);
+  ui.setTool("place");
+}
 
 export function CombatPanel({ record, view }: { record: EncounterRecord; view: EncounterView }) {
   const send = useDocuments((s) => s.encounterAction);
@@ -33,12 +45,12 @@ export function CombatPanel({ record, view }: { record: EncounterRecord; view: E
       <Reasons reasons={reasons} className="mb-2" />
       <div className="flex flex-wrap gap-1.5">
         {!started ? (
-          <Button variant="gold" icon="swords" onClick={() => void act({ type: "start" })}>
+          <Button variant="primary" icon="swords" onClick={() => void act({ type: "start" })}>
             {t("table.start")}
           </Button>
         ) : (
           <>
-            <Button variant="gold" icon="next" onClick={() => void act({ type: "next_turn" })}>
+            <Button variant="primary" icon="next" onClick={() => void act({ type: "next_turn" })}>
               {t("table.next")}
             </Button>
             <Button variant="danger" icon="flag" onClick={() => void act({ type: "end" })}>
@@ -53,7 +65,7 @@ export function CombatPanel({ record, view }: { record: EncounterRecord; view: E
       <label className="mt-2 flex items-center gap-2 text-sm text-ink-muted">
         <input
           type="checkbox"
-          className="accent-[var(--gold)]"
+          className="accent-[var(--blue)]"
           checked={group}
           onChange={(e) => setGroup(e.target.checked)}
         />
@@ -117,12 +129,15 @@ function AddMonster({ record, onClose }: { record: EncounterRecord; onClose: () 
       ...(rollHp ? { roll_hp: true } : {}),
       ...(inLair ? { in_lair: true } : {}),
     };
+    const before = record.encounter.combatants.map((c) => c.id);
     const result = await send(
       record.id,
       Array.from({ length: n }, () => action),
     );
-    if (result.ok) onClose();
-    else setReasons(result.reasons);
+    if (result.ok) {
+      placeNewcomer(record.id, before);
+      onClose();
+    } else setReasons(result.reasons);
   }
 
   return (
@@ -134,7 +149,7 @@ function AddMonster({ record, onClose }: { record: EncounterRecord; onClose: () 
       footer={
         <>
           <Button onClick={onClose}>{t("common.cancel")}</Button>
-          <Button variant="gold" icon="plus" disabled={!picked} onClick={() => void add()}>
+          <Button variant="primary" icon="plus" disabled={!picked} onClick={() => void add()}>
             {t("common.add")}
           </Button>
         </>
@@ -142,7 +157,7 @@ function AddMonster({ record, onClose }: { record: EncounterRecord; onClose: () 
     >
       <Reasons reasons={reasons} className="mb-2" />
       <label className="mb-2 flex items-center gap-2">
-        <Icon name="search" className="text-bronze" />
+        <Icon name="search" className="text-ink-muted" />
         <span className="sr-only">{t("table.monsterSearch")}</span>
         <input
           className="field"
@@ -156,7 +171,7 @@ function AddMonster({ record, onClose }: { record: EncounterRecord; onClose: () 
         <VirtualList
           items={list}
           estimate={44}
-          className="h-[22rem] rounded border border-line"
+          className="h-[22rem] rounded border border-edge"
           label={t("table.addMonster")}
           getKey={(m) => m.id}
           render={(m) => (
@@ -165,8 +180,8 @@ function AddMonster({ record, onClose }: { record: EncounterRecord; onClose: () 
               aria-pressed={picked?.id === m.id}
               onClick={() => setPicked(m)}
               className={cx(
-                "flex w-full items-baseline gap-2 border-b border-line/60 px-2 py-2 text-left hover:bg-panel-2",
-                picked?.id === m.id && "bg-plaque-lit text-gold-hi",
+                "flex w-full items-baseline gap-2 border-b border-edge/60 px-2 py-2 text-left hover:bg-card-2",
+                picked?.id === m.id && "bg-hl text-hl-ink",
               )}
             >
               <span className="flex-1">{m.name}</span>
@@ -179,7 +194,7 @@ function AddMonster({ record, onClose }: { record: EncounterRecord; onClose: () 
         <div className="space-y-2 text-sm">
           {picked && (
             <p>
-              <strong className="font-display text-lg text-gold">{picked.name}</strong>
+              <strong className="font-display text-lg text-ink">{picked.name}</strong>
               <br />
               AC {picked.armor_class} · HP {picked.hit_points} ({picked.hit_dice}) · CR {picked.cr}
             </p>
@@ -200,7 +215,7 @@ function AddMonster({ record, onClose }: { record: EncounterRecord; onClose: () 
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
-              className="accent-[var(--gold)]"
+              className="accent-[var(--blue)]"
               checked={rollHp}
               onChange={(e) => setRollHp(e.target.checked)}
             />
@@ -209,7 +224,7 @@ function AddMonster({ record, onClose }: { record: EncounterRecord; onClose: () 
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
-              className="accent-[var(--gold)]"
+              className="accent-[var(--blue)]"
               checked={inLair}
               onChange={(e) => setInLair(e.target.checked)}
             />
@@ -238,6 +253,7 @@ function AddCharacter({
   const list = Object.values(characters).sort((a, b) => a.build.name.localeCompare(b.build.name));
 
   async function add(id: string) {
+    const before = record.encounter.combatants.map((c) => c.id);
     const result = await send(record.id, {
       type: "add_character",
       character: id,
@@ -245,6 +261,7 @@ function AddCharacter({
       decisions,
     });
     setReasons(result.ok ? null : result.reasons);
+    if (result.ok) placeNewcomer(record.id, before);
   }
 
   return (

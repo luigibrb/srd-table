@@ -16,7 +16,7 @@ import { type CharacterRecord, canRedo, canUndo, useDocuments } from "@/store/do
 import { CombatTab } from "./CombatTab";
 import { FeaturesTab } from "./FeaturesTab";
 import { HitPointsPanel, RestButtons } from "./HitPoints";
-import { InventoryTab } from "./InventoryTab";
+import { InventoryTab, StartingEquipment } from "./InventoryTab";
 import { OverviewTab } from "./OverviewTab";
 import { SpellsTab } from "./SpellsTab";
 
@@ -29,14 +29,14 @@ export function SheetPage({ id, tab }: { id: string; tab: SheetTab }) {
     return (
       <Empty icon="sheet">
         {t("errors.documentGone")}{" "}
-        <Link to="/characters" className="text-gold underline">
+        <Link to="/characters" className="text-blue underline">
           {t("nav.characters")}
         </Link>
       </Empty>
     );
   }
   if (error)
-    return <div className="p-6 text-blood">{t("errors.engine", { message: error.message })}</div>;
+    return <div className="p-6 text-red">{t("errors.engine", { message: error.message })}</div>;
   if (!data) {
     return (
       <div className="p-6">
@@ -82,20 +82,13 @@ function Sheet({
       <header className="panel mb-4 flex flex-wrap items-center gap-4 p-3">
         <PortraitPicker id={id} name={name} />
         <div className="min-w-[12rem] flex-1">
-          <h1 className="font-display text-3xl font-semibold text-gold [font-variant:small-caps]">
-            {name}
-          </h1>
+          <h1 className="font-display text-3xl text-ink">{name}</h1>
           <p className="text-ink-muted">
             {t("common.level", { level: sheet.level })}
             {classes && ` · ${classes}`}
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
-            <Link
-              to="/characters/$id/build"
-              params={{ id }}
-              search={{}}
-              className="plaque plaque-sm"
-            >
+            <Link to="/characters/$id/build" params={{ id }} search={{}} className="btn btn-sm">
               <Icon name="edit" size={16} />
               {t("characters.build")}
             </Link>
@@ -147,7 +140,7 @@ function Sheet({
       </header>
 
       {issues.length > 0 && (
-        <ul aria-label={t("sheet.issues")} className="mb-3 space-y-0.5 text-sm text-gold">
+        <ul aria-label={t("sheet.issues")} className="mb-3 space-y-0.5 text-sm text-orange">
           {issues.map((i) => (
             <li key={i} className="flex gap-2">
               <Icon name="warning" size={16} className="mt-0.5 flex-none" />
@@ -155,6 +148,12 @@ function Sheet({
             </li>
           ))}
         </ul>
+      )}
+
+      {!sheet.play.starting_equipment_taken && (
+        <div className="mb-3">
+          <StartingEquipment id={id} />
+        </div>
       )}
 
       <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
