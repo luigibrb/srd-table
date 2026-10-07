@@ -141,6 +141,18 @@ IndexedDB through `idb`, one database with four stores: `characters`, `encounter
   draws `previewMove`'s path with its cost, zones and Opportunity Attacks. Clicks become `place`
   and `move` with `to`; the engine decides. Everything on the map is also reachable without
   it (target lists, the selection panel).
+- **Exploring** is the encounter outside a fight (`round: 0`, before Start and after End): the
+  quick bar gives way to the exploration bar (`ExplorationPanel`). Moves have no limit; the Move
+  tool's hint is `previewMove`'s `turns` ("65 ft: 3 turns at its Speed") and no reachable
+  squares are lit. The acting character can Search; the GM sets the travel `pace` and
+  `notice_stops` (who stops when someone notices a point: a GM setting, both readings being
+  table styles) with `set_exploration`, and answers a halt by revealing the point or `resume`.
+- **Points of interest** are the encounter's `points`: the GM's Points tool opens
+  `PointDialog` on a square (`add_point`; `update_point` to edit), markers show the kind's
+  icon (hidden ones dashed and only to the GM, an orange ring once a character noticed one),
+  and `PointPanel` shows the open point (its text to everyone once revealed; notes, DC, who
+  noticed it, reveal/hide and remove to the GM). Noticing is the engine's (Passive Perception
+  with the pace, line of sight, Search); the UI never reveals a point by itself.
 
 ## Dice
 

@@ -64,8 +64,10 @@ import {
   type PlayAction,
   PlayError,
   type PlaySheet,
+  POINT_KINDS,
   type PointBuyRules,
   type PointBuyStatus,
+  type PointKind,
   parseBuild,
   parseEncounter,
   parseState,
@@ -328,6 +330,8 @@ export interface EngineConstants {
   readonly max_attuned: number;
   /** The skills each check action accepts (Search, Study, Influence), from its schema. */
   readonly check_skills: Readonly<Record<string, readonly Skill[]>>;
+  /** What a point of interest can be (its icon). */
+  readonly point_kinds: readonly PointKind[];
 }
 
 // --- the facade ---------------------------------------------------------------------------
@@ -433,6 +437,7 @@ export function createInProcessFacade(options: FacadeOptions): EngineFacade {
       steps: STEPS.map((id) => ({ id, title: STEP_TITLES[id] })),
       max_attuned: MAX_ATTUNED,
       check_skills: checkSkills(),
+      point_kinds: POINT_KINDS,
     }),
     async configure(settings) {
       content.configure(settings);

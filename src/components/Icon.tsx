@@ -80,6 +80,16 @@ const PATHS = {
   levelUp: '<path d="M12 20V6M6.5 11.5L12 6l5.5 5.5"/><path d="M5 3.5h14"/>',
   portrait:
     '<rect x="4" y="3.5" width="16" height="17" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M7 18c.9-2.5 2.7-3.7 5-3.7s4.1 1.2 5 3.7"/>',
+  // points of interest
+  pin: '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
+  door: '<path d="M6 21V4.5L15 3v18"/><path d="M15 5h3v16M4 21h16"/><circle cx="12.2" cy="12.5" r=".9"/>',
+  trap: '<path d="M3 15h18"/><path d="M5 15l2-5 2 5 2-5 2 5 2-5 2 5 2-5 1 5"/><path d="M4 19h16"/>',
+  puzzle:
+    '<path d="M5 5h4.5a2 2 0 1 1 4 0H18v4.5a2 2 0 1 1 0 4V18h-4.5a2 2 0 1 0-4 0H5v-4.5a2 2 0 1 0 0-4z"/>',
+  room: '<rect x="4" y="4" width="16" height="16" rx="1"/><path d="M4 12h5M15 12h5"/>',
+  passage: '<path d="M8 3v18M16 3v18"/><path d="M12 6v2.5M12 11v2.5M12 16v2.5"/>',
+  chest:
+    '<path d="M4 10.5h16V19H4z"/><path d="M4 10.5C4 7 6.5 5 12 5s8 2 8 5.5"/><path d="M10.5 13h3v2.5h-3z"/>',
 } as const;
 
 export type IconName = keyof typeof PATHS;
@@ -89,13 +99,20 @@ export function Icon({
   name,
   size = 18,
   className,
+  x,
+  y,
 }: {
   name: IconName;
   size?: number;
   className?: string;
+  /** Inside another SVG (the map): where to draw it. */
+  x?: number;
+  y?: number;
 }) {
   return (
     <svg
+      x={x}
+      y={y}
       viewBox="0 0 24 24"
       width={size}
       height={size}

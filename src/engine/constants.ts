@@ -3,7 +3,7 @@
  * from the facade once at startup: the main thread imports engine types, never engine code.
  */
 
-import type { Ability, Alignment, DamageType, Skill, Step } from "srd-rules-engine";
+import type { Ability, Alignment, DamageType, PointKind, Skill, Step } from "srd-rules-engine";
 import type { EngineConstants, EngineFacade } from "./facade";
 
 let loaded: EngineConstants | null = null;
@@ -26,3 +26,4 @@ export const skillName = (id: Skill | string): string =>
 export const damageTypes = (): readonly DamageType[] => constants().damage_types;
 export const alignments = (): readonly { id: Alignment; name: string }[] => constants().alignments;
 export const steps = (): readonly Step[] => constants().steps.map((s) => s.id);
+export const pointKinds = (): readonly PointKind[] => constants().point_kinds;

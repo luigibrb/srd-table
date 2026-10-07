@@ -7,11 +7,11 @@
  */
 
 import { type PointerEvent, useMemo, useRef, useState } from "react";
-import type { Encounter } from "srd-rules-engine";
+import type { Encounter, PointKind, PointOfInterest } from "srd-rules-engine";
 import { Icon, type IconName } from "@/components/Icon";
 import { Button, cx, Reasons } from "@/components/ui";
 import type { CombatantView, EncounterView } from "@/engine/facade";
-import { t } from "@/i18n";
+import { t, tn } from "@/i18n";
 import { useDistance, useMovePreview, useReachable } from "@/queries";
 import { useDocuments } from "@/store/documents";
 import { alliedSides, type MapTool, useTableUi } from "../encounter/tableUi";
@@ -62,8 +62,10 @@ export function BattleMap({
     ui.tool === "move" && !ui.aiming && selectedForMove?.position && controllable(selectedForMove)
       ? selectedForMove.id
       : null;
-  // Where the selected combatant can go, and what moving to the hovered square would do.
-  const reachable = useReachable(encounterId, moving);
+  // Where the selected combatant can go (in a fight: exploring has no limit), and what moving to
+  // the hovered square would do.
+  const exploring = view.round === 0;
+  const reachable = useReachable(encounterId, exploring ? null : moving);
   const reachableSet = useMemo(
     () => new Set((reachable.data?.squares ?? []).map((p) => `${p.x},${p.y}`)),
     [reachable.data],
@@ -161,6 +163,9 @@ export function BattleMap({
         ui.setPing(square);
         setTimeout(() => useTableUi.getState().setPing(null), 3000);
         break;
+      case "points":
+        if (gm) ui.placePoint(square);
+        break;
       default:
         break;
     }
@@ -182,26 +187,29 @@ export function BattleMap({
     { tool: "difficult", icon: "terrain", label: t("map.difficult"), gmOnly: true },
     { tool: "blocked", icon: "lock", label: t("map.blocked"), gmOnly: true },
     { tool: "clear", icon: "x", label: t("map.clear"), gmOnly: true },
+    { tool: "points", icon: "flag", label: t("map.points"), gmOnly: true },
   ];
 
   const hint = ui.aiming
     ? t("map.areaHint", { name: selected?.name ?? "" })
     : ui.tool === "move" && selected
       ? movePreview.data && hover
-        ? movePreview.data.ok
-          ? t("map.movePreview", {
-              cost: movePreview.data.cost,
-              left: movePreview.data.movement_left,
-            }) +
-            (movePreview.data.opportunity_attacks.length
-              ? ` ${t("map.opportunity", {
-                  names: movePreview.data.opportunity_attacks
-                    .map((id) => view.combatants.find((c) => c.id === id)?.name ?? id)
-                    .join(", "),
-                })}`
-              : "") +
-            movePreview.data.zones.map((z) => ` ${z.label}`).join("")
-          : movePreview.data.reasons.join(" ")
+        ? movePreview.data.ok && movePreview.data.turns !== null
+          ? tn("map.explorePreview", movePreview.data.turns, { cost: movePreview.data.cost })
+          : movePreview.data.ok
+            ? t("map.movePreview", {
+                cost: movePreview.data.cost,
+                left: movePreview.data.movement_left,
+              }) +
+              (movePreview.data.opportunity_attacks.length
+                ? ` ${t("map.opportunity", {
+                    names: movePreview.data.opportunity_attacks
+                      .map((id) => view.combatants.find((c) => c.id === id)?.name ?? id)
+                      .join(", "),
+                  })}`
+                : "") +
+              movePreview.data.zones.map((z) => ` ${z.label}`).join("")
+            : movePreview.data.reasons.join(" ")
         : t("map.moveHint", { name: selected.name })
       : ui.tool === "place" && selected
         ? t("map.placeHint", { name: selected.name })
@@ -211,7 +219,9 @@ export function BattleMap({
             ? t("map.wallHint")
             : ["difficult", "blocked", "clear"].includes(ui.tool)
               ? t("map.terrainHint")
-              : null;
+              : ui.tool === "points"
+                ? t("map.pointsHint")
+                : null;
 
   return (
     <section
@@ -495,6 +505,18 @@ export function BattleMap({
             />
           )}
 
+          {encounter.points
+            .filter((p) => gm || p.revealed)
+            .map((p) => (
+              <PointMarker
+                key={p.id}
+                point={p}
+                open={ui.point === p.id}
+                gm={gm}
+                onOpen={() => ui.openPoint(p.id)}
+              />
+            ))}
+
           {view.combatants
             .filter((c) => c.position)
             .map((c) => (
@@ -715,6 +737,93 @@ function Token({
         </g>
       )}
       <title>{c.name}</title>
+    </g>
+  );
+}
+
+/** A point's icon by its kind. */
+export const POINT_ICON: Readonly<Record<PointKind, IconName>> = {
+  door: "door",
+  trap: "trap",
+  puzzle: "puzzle",
+  detail: "search",
+  fight: "swords",
+  room: "room",
+  passage: "passage",
+  scene: "scroll",
+  person: "user",
+  treasure: "chest",
+};
+
+/**
+ * A point of interest on its square. The GM sees hidden ones with a dashed outline, and an
+ * orange ring when a character noticed one; players see only revealed points.
+ */
+function PointMarker({
+  point,
+  open,
+  gm,
+  onOpen,
+}: {
+  point: PointOfInterest;
+  open: boolean;
+  gm: boolean;
+  onOpen: () => void;
+}) {
+  const x = point.at.x * CELL;
+  const y = point.at.y * CELL;
+  const noticed = gm && !point.revealed && point.noticed_by.length > 0;
+  const label = `${point.title}${gm && !point.revealed ? ` (${t("points.hidden")})` : ""}${noticed ? ` · ${t("points.noticed")}` : ""}`;
+  return (
+    // biome-ignore lint/a11y/useSemanticElements: an SVG marker can't be a <button>
+    <g
+      role="button"
+      tabIndex={0}
+      aria-label={label}
+      aria-pressed={open}
+      className="cursor-pointer outline-none [&:focus-visible>rect]:stroke-focus"
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        onOpen();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
+    >
+      {noticed && (
+        <rect
+          x={x + 1}
+          y={y + 1}
+          width={CELL - 2}
+          height={CELL - 2}
+          rx={6}
+          fill="none"
+          className="stroke-orange"
+          strokeWidth={4}
+        />
+      )}
+      <rect
+        x={x + 6}
+        y={y + 6}
+        width={CELL - 12}
+        height={CELL - 12}
+        rx={4}
+        className={cx("fill-card", open ? "stroke-blue" : "stroke-ink")}
+        strokeWidth={open ? 3 : 2}
+        strokeDasharray={!point.revealed ? "4 3" : undefined}
+        opacity={!point.revealed ? 0.85 : 1}
+      />
+      <Icon
+        name={POINT_ICON[point.kind]}
+        size={CELL - 20}
+        x={x + 10}
+        y={y + 10}
+        className={point.revealed ? "text-ink" : "text-ink-muted"}
+      />
+      <title>{label}</title>
     </g>
   );
 }

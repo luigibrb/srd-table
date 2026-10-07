@@ -12,9 +12,17 @@ Private repo. Milestones 1–5 are built (see "Milestones"); design decisions ar
 
 **The UI never implements a rule.** It doesn't compute a modifier, check that an action is
 legal, decide whose turn it is, roll a die, or rephrase a refusal. If the UI needs something the
-engine doesn't give, the fix belongs in the engine (a new field, option or function, done in the
-engine repo under its own CLAUDE.md), not in a component. Keep a list of such gaps in
-`docs/ENGINE-GAPS.md` and raise them; don't work around them with UI logic.
+engine doesn't give, the fix belongs in the engine (a new field, option or function), not in a
+component; don't work around it with UI logic.
+
+**This repo's sessions never change engine code.** Write the need as a requirement (what to
+implement, acceptance criteria, SRD references) in the engine's `docs/REQUESTS.md` (git-ignored
+there via `.git/info/exclude`) with an id `R<n>`; the engine's own Claude Code session implements
+it. Track the same id in `docs/ENGINE-GAPS.md`, in the app's terms: what the app does meanwhile,
+where the fallback lives, what to change once it lands. Reading the engine is fine. The engine
+session answers in its `docs/RESPONSES.md` (and a `Request: R<n>` commit trailer, maybe a
+`SendMessage` nudge): read it at the start of a session and before engine-dependent work (the
+protocol is in `../CLAUDE.md`).
 
 Corollaries:
 
@@ -202,6 +210,11 @@ gives them (translating them is engine gap 6).
   zones drawn from `encounter.zones`, walls and Difficult Terrain from `encounter.map` (GM tools:
   `add_wall`, `remove_wall`, `set_terrain`); cover comes from the engine's map, or the GM's input
   per attack.
+- **Exploration** (the encounter outside a fight) — characters move freely, the map shows how
+  many turns a move takes (`previewMove`'s `turns`), Search; the GM's travel pace and "who stops
+  when someone notices something" (`set_exploration`), halts answered by reveal or `resume`.
+  Points of interest (`encounter.points`): the GM places and edits them (Points tool), players
+  see only revealed ones; noticing is the engine's.
 - **Compendium** — browse catalog tables (spells, monsters, items, feats) with the SRD text.
 - **Settings** — campaign sources and packs, decision modes, theme, dev seed.
 

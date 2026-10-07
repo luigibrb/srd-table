@@ -15,7 +15,8 @@ export type MapTool =
   | "difficult"
   | "blocked"
   | "clear"
-  | "ping";
+  | "ping"
+  | "points";
 
 export interface Aiming {
   /** Who acts (the area's origin). */
@@ -41,7 +42,13 @@ interface TableUi {
   ping: { x: number; y: number; at: number } | null;
   /** While an action is being composed, clicking a token picks it as a target. */
   onToken: ((id: string) => void) | null;
+  /** The point of interest open in the side panel. */
+  point: string | null;
+  /** The square the GM clicked with the Points tool: a new point goes there. */
+  newPoint: { x: number; y: number } | null;
   select(id: string | null, pinned?: boolean): void;
+  openPoint(id: string | null): void;
+  placePoint(square: { x: number; y: number } | null): void;
   setTool(tool: MapTool): void;
   aim(aiming: Aiming | null): void;
   setHighlight(squares: readonly string[], candidates?: readonly string[]): void;
@@ -57,8 +64,16 @@ export const useTableUi = create<TableUi>()((set) => ({
   candidates: [],
   ping: null,
   onToken: null,
+  point: null,
+  newPoint: null,
   select(id, pinned = true) {
     set({ selected: id, pinned });
+  },
+  openPoint(point) {
+    set({ point });
+  },
+  placePoint(newPoint) {
+    set({ newPoint });
   },
   setTool(tool) {
     set({ tool, aiming: null });
