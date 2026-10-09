@@ -300,6 +300,14 @@ docs/            # ARCHITECTURE.md (decisions), ENGINE-GAPS.md (what the UI need
 6. **Later** — offline (service worker precache), shared sessions (one authority applies
    actions — the GM's client or a server running the engine's `createHandler` — and others
    receive documents), private packs managed in the app.
+   - **Manual play** (design not decided): a table may play without the engine resolving
+     everything, e.g. spend a slot, roll physical dice, lower a foe's HP by hand. Open
+     questions, each likely a GM setting rather than one "rules off" switch: dice entered by
+     the players while the engine still resolves (an engine request: a roll that waits for
+     numbers, like `decisions: "ask"`); by-hand bookkeeping through the engine's existing
+     actions (damage, healing, slots, conditions, effects, Concentration), so the state stays
+     consistent and undoable; a GM override of a refusal, recorded in the log (an engine
+     request). The UI still implements no rule: by hand means the user decides, not the app.
 
 ## Commands
 
