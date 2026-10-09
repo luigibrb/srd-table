@@ -18,7 +18,8 @@ export interface CampaignSettings {
   readonly sources: readonly string[] | null;
   /**
    * Who answers decisions after a roll, for new combatants. `ask` stops the action for the player
-   * (or the GM, for monsters); `auto` takes the engine's recommendation. Per combatant later.
+   * (or the GM, for monsters); `auto` takes the engine's recommendation. A combatant's own mode
+   * is changed in the encounter (`set_decisions`, selection panel).
    */
   readonly character_decisions: DecisionMode;
   readonly monster_decisions: DecisionMode;

@@ -183,7 +183,8 @@ fact (dice-box-threejs accepts predetermined results).
 - **Icons**: line drawings in `components/Icon.tsx` (24×24, stroke 1.8), never font glyphs.
 - **Language**: the app's words are in `src/i18n/en.ts` (`t`, `tn` with `Intl.PluralRules`,
   `Intl.NumberFormat`, `Intl.ListFormat`); another language is one more catalog. Engine strings
-  stay as the engine gives them (gap 6).
+  stay as the engine gives them; their `messages` (codes and parameters) are what a
+  translation will render (R13 in ENGINE-GAPS.md).
 
 ## Dependencies
 

@@ -181,7 +181,8 @@ anything else.
 
 The app's own words live in `src/i18n/en.ts` and are read with `t()` / `tn()` (never write UI text
 in a component); another language is one more catalog. Engine strings are shown as the engine
-gives them (translating them is engine gap 6).
+gives them; the engine's `messages` (codes and parameters) are what a translation will render
+(engine request R13, in `docs/ENGINE-GAPS.md`).
 
 ## Screens
 
@@ -205,7 +206,7 @@ gives them (translating them is engine gap 6).
   pending decisions as a modal that shows the roll. GM controls (add monsters, set Initiative,
   effects by hand, `set_decisions`) are separate from a player's controls.
 - **Map** (in the encounter) — 5-foot grid, tokens sized by creature size, `place`/`move`
-  (paths drawn square by square once the engine exposes them: gap 2), reach and range
+  (the path drawn square by square from `previewMove`), reach and range
   highlighted from the option's targets, area templates aimed with `{ point }` / `{ toward }`,
   zones drawn from `encounter.zones`, walls and Difficult Terrain from `encounter.map` (GM tools:
   `add_wall`, `remove_wall`, `set_terrain`); cover comes from the engine's map, or the GM's input
