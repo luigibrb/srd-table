@@ -22,24 +22,28 @@ The app never works around a gap with rules of its own.
 
 | Id | What the app is missing | Engine status |
 |---|---|---|
-| R13 | Translatable engine messages | partial: stage 2 of 4 (`5602229`, `d0496d9`: every encounter sentence) |
+| R13 | Translatable engine messages | partial: stage 3 of 4 (`5602229`, `d0496d9`, `64f6e47`: every play and encounter note, roll reasons) |
 | R14 | Positions required when the map is in use (proposal) | open, low priority |
 
 ### R13. Translatable engine messages
 
-- **Delivered so far (stages 1–2).** Encounter results carry `messages` (`{ code, params, text }`,
+- **Delivered so far (stages 1–3).** Encounter results carry `messages` (`{ code, params, text }`,
   one per note). The facade passes them on (`EncounterChange.messages`) and the combat log
   stores them with each entry (`LogEntry.messages`, kept on load only while they match the
   lines one for one), so entries saved now can be translated later. Since `d0496d9` every
-  encounter sentence of the engine's own has a code (~130 more in `MESSAGES_EN`). Still code
-  `text`: play notes inside an encounter (healing, conditions, death saves, Resistance / temp
-  HP lines), `castSpell`'s "effects aren't automated" line, and roll `reasons`. Not coded yet:
-  play notes outside encounters, decision questions, refusals, builder strings.
+  encounter sentence of the engine's own has a code (~130 more in `MESSAGES_EN`). Since `64f6e47`
+  play results (`applyAction`, `reconcileState`), damage and `castSpell` carry `messages` too,
+  and roll results carry `reason_messages` next to `reasons`. Still code `text`: decision
+  questions and a `ModeReason` passed in as a plain string. Not coded yet: refusals
+  (encounter, play, builder), the builder's labels and issues. The app doesn't pass play
+  `messages` or `reason_messages` through yet: toasts and the dice results box aren't saved,
+  so they need them only once a second language exists.
 - **Meanwhile.** App words in `src/i18n/` (English, ready for Italian); the log shows `text`.
 - **When an Italian catalog is added.** Render log entries from `messages` with the engine's
   `renderMessage(message, catalog)` (an engine value: call it in the worker through the facade,
-  never on the main thread), falling back to `text`; then wire the later stages (play notes,
-  refusals, builder) as they land.
+  never on the main thread), falling back to `text`. Then pass play `messages` through the
+  facade for the toasts, render the dice results box's reasons from `reason_messages`, and wire
+  the last stage (decision questions, refusals, builder) as it lands.
 
 ### R14. Positions required (proposal)
 
