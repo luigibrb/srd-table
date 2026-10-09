@@ -22,17 +22,19 @@ The app never works around a gap with rules of its own.
 
 | Id | What the app is missing | Engine status |
 |---|---|---|
-| R13 | Translatable engine messages | partial: stage 1 of 4 (`5602229`, encounter notes) |
+| R13 | Translatable engine messages | partial: stage 2 of 4 (`5602229`, `d0496d9`: every encounter sentence) |
 | R14 | Positions required when the map is in use (proposal) | open, low priority |
 
 ### R13. Translatable engine messages
 
-- **Delivered so far (stage 1).** Encounter results carry `messages` (`{ code, params, text }`,
+- **Delivered so far (stages 1–2).** Encounter results carry `messages` (`{ code, params, text }`,
   one per note). The facade passes them on (`EncounterChange.messages`) and the combat log
   stores them with each entry (`LogEntry.messages`, kept on load only while they match the
-  lines one for one), so entries saved now can be translated later. Many notes still come as
-  code `text` (the English sentence in `params.text`); play notes, refusals and builder strings
-  have no codes yet.
+  lines one for one), so entries saved now can be translated later. Since `d0496d9` every
+  encounter sentence of the engine's own has a code (~130 more in `MESSAGES_EN`). Still code
+  `text`: play notes inside an encounter (healing, conditions, death saves, Resistance / temp
+  HP lines), `castSpell`'s "effects aren't automated" line, and roll `reasons`. Not coded yet:
+  play notes outside encounters, decision questions, refusals, builder strings.
 - **Meanwhile.** App words in `src/i18n/` (English, ready for Italian); the log shows `text`.
 - **When an Italian catalog is added.** Render log entries from `messages` with the engine's
   `renderMessage(message, catalog)` (an engine value: call it in the worker through the facade,
