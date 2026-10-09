@@ -1,7 +1,8 @@
 /**
  * A warning while the map is in use (someone stands on it) and a combatant doesn't: without a
- * square, the engine treats distances to it as unknown, so its moves only spend movement and no
- * reach, range or area is checked for it or against it. The GM can place it from here.
+ * square, the engine treats distances to it as unknown, so its moves only spend movement. With
+ * the encounter's `positions: "optional"` no reach, range or area is checked for it or against
+ * it; with `"required"` the engine refuses what needs that distance. The GM can place it from here.
  */
 
 import { Icon } from "@/components/Icon";
@@ -14,10 +15,13 @@ export function OffMapNotice({
   view,
   actor,
   gm,
+  required,
 }: {
   view: EncounterView;
   actor: CombatantView;
   gm: boolean;
+  /** The encounter's `positions` is `"required"`. */
+  required: boolean;
 }) {
   const select = useTableUi((s) => s.select);
   const setTool = useTableUi((s) => s.setTool);
@@ -39,8 +43,10 @@ export function OffMapNotice({
       <Icon name="warning" size={18} className="flex-none text-orange" />
       <p className="min-w-0 flex-1">
         {actorOff
-          ? t("table.offMapActor", { name: actor.name })
-          : tn("table.offMapOthers", off.length, { names: formatList(off.map((c) => c.name)) })}
+          ? t(required ? "table.offMapActorRequired" : "table.offMapActor", { name: actor.name })
+          : tn(required ? "table.offMapOthersRequired" : "table.offMapOthers", off.length, {
+              names: formatList(off.map((c) => c.name)),
+            })}
       </p>
       {gm && actorOff && (
         <Button size="sm" icon="users" onClick={() => place(actor.id)}>

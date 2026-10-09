@@ -143,6 +143,31 @@ describe("encounter table", () => {
     await waitFor(() => expect(useDocuments.getState().encounters[id]?.encounter.turn).toBe(1));
   });
 
+  it("lets the GM require positions: the engine then refuses an off-map attack", async () => {
+    const r = await engine.applyEncounterAction(await engine.newEncounter(), {}, [
+      { type: "add_monster", monster: "goblin-warrior" },
+      { type: "add_monster", monster: "zombie" },
+      { type: "place", id: "goblin-warrior", x: 2, y: 2 },
+      { type: "set_initiative", id: "zombie", value: 20 },
+      { type: "set_initiative", id: "goblin-warrior", value: 5 },
+      { type: "start" },
+    ]);
+    if (!r.ok) throw new Error(r.reasons.join("; "));
+    const id = storeEncounter(r.encounter);
+    await renderApp(`/encounters/${id}`);
+
+    expect(await screen.findByText(/aren't checked/, {}, { timeout: 15_000 })).toBeInTheDocument();
+    await userEvent.selectOptions(await screen.findByLabelText("Off the map"), "required");
+    await waitFor(() =>
+      expect(useDocuments.getState().encounters[id]?.encounter.positions).toBe("required"),
+    );
+    expect(await screen.findByText(/the engine refuses its attacks/)).toBeInTheDocument();
+    const options = await screen.findByRole("region", { name: "Options" });
+    await waitFor(() =>
+      expect(within(options).getAllByText(/Zombie isn't on the map/).length).toBeGreaterThan(0),
+    );
+  });
+
   it("links a result's targets to the combatants: a click selects and pings it", async () => {
     const r = await engine.applyEncounterAction(await engine.newEncounter(), {}, [
       { type: "add_monster", monster: "goblin-warrior" },

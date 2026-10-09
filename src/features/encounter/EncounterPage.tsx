@@ -171,7 +171,14 @@ function Table({ record }: { record: EncounterRecord }) {
             canAnswer={gm || (pendingWho ? mine(pendingWho) : false)}
           />
         )}
-        {actor && <OffMapNotice view={view} actor={actor} gm={gm} />}
+        {actor && (
+          <OffMapNotice
+            view={view}
+            actor={actor}
+            gm={gm}
+            required={record.encounter.positions === "required"}
+          />
+        )}
         {!pending && actor && options.data && composing && (
           <ActionComposer
             key={composing.label}

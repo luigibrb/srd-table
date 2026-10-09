@@ -404,6 +404,15 @@ export const en = {
   "table.offMapOthers.other":
     "{names} aren't on the map. Until they're placed, reach, range and areas aren't checked against them.",
   "table.offMapAskGm": "Ask the GM to place it on the map.",
+  "table.offMapActorRequired":
+    "{name} isn't on the map, but others are. Until it's placed, its moves only spend movement, and the engine refuses its attacks and spells that need a distance.",
+  "table.offMapOthersRequired.one":
+    "{names} isn't on the map. Until it's placed, the engine refuses attacks and spells against it that need a distance.",
+  "table.offMapOthersRequired.other":
+    "{names} aren't on the map. Until they're placed, the engine refuses attacks and spells against them that need a distance.",
+  "table.positions": "Off the map",
+  "table.positionsOptional": "Warn only",
+  "table.positionsRequired": "Refuse what needs a distance",
   "table.placeIt": "Place {name}",
   "table.endTurn": "End turn",
   "table.pending": "Waiting for a decision",

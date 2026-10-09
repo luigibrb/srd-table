@@ -92,6 +92,22 @@ export function CombatPanel({ record, view }: { record: EncounterRecord; view: E
           <option value="auto">{t("table.decisionsAuto")}</option>
         </select>
       </label>
+      <label className="mt-2 flex items-center gap-2 text-sm">
+        <span className="text-ink-muted">{t("table.positions")}</span>
+        <select
+          className="field w-auto"
+          value={encounter.positions}
+          onChange={(e) =>
+            void act({
+              type: "set_positions",
+              mode: e.target.value as "optional" | "required",
+            })
+          }
+        >
+          <option value="optional">{t("table.positionsOptional")}</option>
+          <option value="required">{t("table.positionsRequired")}</option>
+        </select>
+      </label>
       {adding === "monster" && <AddMonster record={record} onClose={() => setAdding(null)} />}
       {adding === "character" && (
         <AddCharacter record={record} view={view} onClose={() => setAdding(null)} />

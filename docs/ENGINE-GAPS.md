@@ -23,7 +23,6 @@ The app never works around a gap with rules of its own.
 | Id | What the app is missing | Engine status |
 |---|---|---|
 | R13 | Translatable engine messages | partial: stage 3 of 4 (`5602229`, `d0496d9`, `64f6e47`: every play and encounter note, roll reasons) |
-| R14 | Positions required when the map is in use (a GM setting) | open |
 
 ### R13. Translatable engine messages
 
@@ -45,17 +44,6 @@ The app never works around a gap with rules of its own.
   facade for the toasts, render the dice results box's reasons from `reason_messages`, and wire
   the last stage (decision questions, refusals, builder) as it lands.
 
-### R14. Positions required (a GM setting)
-
-- **Decided (2026-10-10).** A GM setting for the encounter, defaulting to "optional" (today's
-  behaviour: the engine lets an off-map combatant's reach, range and areas pass).
-- **Meanwhile.** `OffMapNotice.tsx` warns that reach, range and areas aren't checked for a
-  combatant off a map in use.
-- **When done.** A select in the GM's combat controls (`CombatPanel.tsx`, next to the decisions
-  mode) sending the engine's setting action; i18n words for it. With "required", the refusals
-  and disabled options come from the engine as usual (reason shown verbatim). Keep the off-map
-  notice in both modes; under "required" it can say the engine will refuse.
-
 ## Done
 
 | Id | What | Engine | App |
@@ -68,6 +56,7 @@ The app never works around a gap with rules of its own.
 | R6 | Cunning / Brutal Strike | `b22a78e` (main) | "Strike effects" in the composer from `OptionEntry.strikes` (unavailable ones disabled with the engine's reason, not hidden), merged into the attack |
 | R7 | Rest-change options as played | `7ec7459` (main) | facade `evaluatePlay` (`evaluate(playBuild(…))`) for the sheet's "Today's picks" (`RestChoices.tsx`) |
 | R8 | Magic item bases | `bcc01bd` (main) | "Add an item" offers only `magicItemBases` (facade `magicItemBases`, `useMagicItemBases`) |
+| R14 | Positions required (a GM setting) | `9c89a34` (main) | "Off the map" select in the GM's combat controls (`CombatPanel.tsx`: warn only / refuse what needs a distance, `set_positions`); the off-map notice says the engine refuses under `required` (`OffMapNotice.tsx`); refusals and disabled options come from the engine (`off_map`) |
 | R10 | Combatant ids in results | `0d8c00f` (main) | target names in the dice tray (spell, save effect and follow-up targets) are links: a click selects the combatant (rail and map) and pings its square (`DiceTray.tsx` `TargetName`, `useUi.focus`, `EncounterPage.tsx`) |
 | R11 | Option previews | `2144460` (main) | each builder option shows what it would change ("AC 16 → 17", `ChoiceCard.tsx` `PreviewLine`, facade `optionPreviews`, `useOptionPreviews`), Ability Score Improvement rows too; not on the sheet's "Today's picks" (the saved build isn't the build as played) |
 | R12 | `unassignedValues` | `5dbf55e` (main) | the ability selects offer only the engine's unassigned values plus the ability's own (`AbilitiesView.unassigned`); the swap convenience is gone |
