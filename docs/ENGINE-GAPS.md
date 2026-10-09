@@ -23,7 +23,7 @@ The app never works around a gap with rules of its own.
 | Id | What the app is missing | Engine status |
 |---|---|---|
 | R13 | Translatable engine messages | partial: stage 3 of 4 (`5602229`, `d0496d9`, `64f6e47`: every play and encounter note, roll reasons) |
-| R14 | Positions required when the map is in use (proposal) | open, low priority |
+| R14 | Positions required when the map is in use (a GM setting) | open |
 
 ### R13. Translatable engine messages
 
@@ -45,11 +45,16 @@ The app never works around a gap with rules of its own.
   facade for the toasts, render the dice results box's reasons from `reason_messages`, and wire
   the last stage (decision questions, refusals, builder) as it lands.
 
-### R14. Positions required (proposal)
+### R14. Positions required (a GM setting)
 
+- **Decided (2026-10-10).** A GM setting for the encounter, defaulting to "optional" (today's
+  behaviour: the engine lets an off-map combatant's reach, range and areas pass).
 - **Meanwhile.** `OffMapNotice.tsx` warns that reach, range and areas aren't checked for a
   combatant off a map in use.
-- **Decide first** whether the GM wants this; then a setting in `CombatPanel.tsx`.
+- **When done.** A select in the GM's combat controls (`CombatPanel.tsx`, next to the decisions
+  mode) sending the engine's setting action; i18n words for it. With "required", the refusals
+  and disabled options come from the engine as usual (reason shown verbatim). Keep the off-map
+  notice in both modes; under "required" it can say the engine will refuse.
 
 ## Done
 
