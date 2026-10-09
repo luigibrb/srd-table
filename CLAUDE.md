@@ -308,6 +308,24 @@ docs/            # ARCHITECTURE.md (decisions), ENGINE-GAPS.md (what the UI need
      actions (damage, healing, slots, conditions, effects, Concentration), so the state stays
      consistent and undoable; a GM override of a refusal, recorded in the log (an engine
      request). The UI still implements no rule: by hand means the user decides, not the app.
+     Engine work each piece needs (checked against the engine's `main` at `d0496d9`):
+     - *By-hand bookkeeping:* almost none. Characters' play actions cover slots (`spend_slot`,
+       `spend_pact_slot`, `restore_*`), `damage`, `heal`, `set_hp`, `set_temp_hp`, conditions,
+       `set_concentration`, `use_feature`, `use_item`, death saves; the encounter's `effects`
+       applies them to any combatant (monsters: damage, heal, temp HP, conditions; durations
+       and Concentration-tied conditions), and `use` marks the Action, Bonus Action or
+       Reaction spent. Logged with codes and undoable. Gap: a monster's limited uses
+       ("(1/Day)", Recharge) can't be spent by hand, and monster spell slots aren't tracked
+       (a small request, if manual mode covers monsters). The rest is app work: a manual panel.
+     - *Physical dice, engine resolves:* an engine request. The engine rolls in one synchronous
+       pass; a roll must stop the action and wait for entered numbers, as `decisions: "ask"`
+       stops with `pending` and `decide` answers. The UI can't fake it. Without it, physical
+       dice still work by hand (roll at the table, enter the damage with `effects`), but the
+       engine doesn't apply those numbers to saves, half damage and so on.
+     - *GM override of a refusal:* an engine request (e.g. a `force` option): legality is
+       checked inside the engine's actions, so an override must go through them and be logged.
+     Order that suits this: the manual panel first (buildable now), the two requests once the
+     design is settled.
 
 ## Commands
 
