@@ -163,6 +163,45 @@ seed). The **dice tray** (`components/DiceTray.tsx`) shows each result as text f
 it's the stub for 3D dice, which can replace `DiceCard` and animate the same numbers after the
 fact (dice-box-threejs accepts predetermined results).
 
+## Manual play
+
+Designed 2026-10-10, not built yet (roadmap: milestone 6). A table may play without the engine
+resolving everything. The UI still implements no rule: costs, legality and every state change
+go through the engine; "by hand" means the user decides an outcome, not the app.
+
+**Three ways to play an action.** Each option keeps its normal button and gets the
+alternatives next to it ("Cast", "Cast, I'll roll", "Cast by hand"); the default way is the
+highlighted one.
+
+- **Automatic** — today's behaviour: the engine rolls and resolves.
+- **Own dice** — the engine resolves, but every roll of a combatant the player controls (attack
+  rolls, saves, checks, damage, healing) stops the action and waits for the numbers rolled at
+  the table, as decisions stop with `pending` today. Rolls of creatures the player doesn't
+  control stay with their controller (the GM's for monsters).
+- **By hand** — the action is *declared*: the engine checks it's allowed and spends its costs
+  (slot, Action / Bonus Action / Reaction, a feature's or a monster's limited use, Concentration
+  started), rolls nothing, applies no effect, and logs it as done by hand. The outcome is then
+  applied by hand through the encounter's `effects` (damage with its type, healing, temp HP,
+  conditions, timed or Concentration-tied), so Resistance, Concentration saves on damage and HP
+  limits still come from the engine.
+
+**Who applies a by-hand outcome.** Only the GM changes *other* creatures. A player declares
+(the costs are theirs) and changes only their own character, as on the sheet; the GM's view
+lists the declared actions waiting for an outcome, each with its targets, and applies it with
+the existing "effects by hand" controls.
+
+**The default way, per combatant.** Campaign settings give a default for characters and one for
+monsters (like the decision modes); the GM changes it per combatant in the encounter (selection
+panel). Each action can still be played another way.
+
+**GM override.** A refused option shows "Do it anyway" in the GM's view only: the engine applies
+the action despite the refusal and the log marks it as an override. Players never see it.
+
+**Engine requests this needs** (not filed yet): a declared action (`manual: true` on attacks,
+spells, features and monster actions: costs only), including spending a monster's "(1/Day)" and
+Recharge uses by hand; rolls that wait for entered numbers, per combatant (like `decisions`);
+`force` on a refused action, logged, for the GM.
+
 ## Look and language
 
 - **Look**: "Mat and Marker" (2026-10-07), replacing the first night-blue-and-gold look: the

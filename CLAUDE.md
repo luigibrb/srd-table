@@ -301,32 +301,12 @@ docs/            # ARCHITECTURE.md (decisions), ENGINE-GAPS.md (what the UI need
 6. **Later** — offline (service worker precache), shared sessions (one authority applies
    actions — the GM's client or a server running the engine's `createHandler` — and others
    receive documents), private packs managed in the app.
-   - **Manual play** (design not decided): a table may play without the engine resolving
-     everything, e.g. spend a slot, roll physical dice, lower a foe's HP by hand. Open
-     questions, each likely a GM setting rather than one "rules off" switch: dice entered by
-     the players while the engine still resolves (an engine request: a roll that waits for
-     numbers, like `decisions: "ask"`); by-hand bookkeeping through the engine's existing
-     actions (damage, healing, slots, conditions, effects, Concentration), so the state stays
-     consistent and undoable; a GM override of a refusal, recorded in the log (an engine
-     request). The UI still implements no rule: by hand means the user decides, not the app.
-     Engine work each piece needs (checked against the engine's `main` at `d0496d9`):
-     - *By-hand bookkeeping:* almost none. Characters' play actions cover slots (`spend_slot`,
-       `spend_pact_slot`, `restore_*`), `damage`, `heal`, `set_hp`, `set_temp_hp`, conditions,
-       `set_concentration`, `use_feature`, `use_item`, death saves; the encounter's `effects`
-       applies them to any combatant (monsters: damage, heal, temp HP, conditions; durations
-       and Concentration-tied conditions), and `use` marks the Action, Bonus Action or
-       Reaction spent. Logged with codes and undoable. Gap: a monster's limited uses
-       ("(1/Day)", Recharge) can't be spent by hand, and monster spell slots aren't tracked
-       (a small request, if manual mode covers monsters). The rest is app work: a manual panel.
-     - *Physical dice, engine resolves:* an engine request. The engine rolls in one synchronous
-       pass; a roll must stop the action and wait for entered numbers, as `decisions: "ask"`
-       stops with `pending` and `decide` answers. The UI can't fake it. Without it, physical
-       dice still work by hand (roll at the table, enter the damage with `effects`), but the
-       engine doesn't apply those numbers to saves, half damage and so on.
-     - *GM override of a refusal:* an engine request (e.g. a `force` option): legality is
-       checked inside the engine's actions, so an override must go through them and be logged.
-     Order that suits this: the manual panel first (buildable now), the two requests once the
-     design is settled.
+   - **Manual play** (designed 2026-10-10, see "Manual play" in `docs/ARCHITECTURE.md`):
+     each action played automatically, with the players' own dice (the engine still resolves),
+     or by hand (the engine spends the costs, the outcome is applied with `effects`); a default
+     per combatant; only the GM applies by-hand outcomes to other creatures and overrides a
+     refusal. Needs three engine requests (declared actions with monster limited uses, rolls
+     that wait for entered numbers, `force`), then the app's controls.
 
 ## Commands
 
