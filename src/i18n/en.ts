@@ -149,6 +149,7 @@ export const en = {
   "builder.name": "Name",
   "builder.alignment": "Alignment",
   "builder.unassigned": "—",
+  "builder.statChange": "{label} {before} → {after}",
   "builder.levelOf": "Level {level}",
   "builder.levelChoices": "Choices at level {level}",
   "builder.pickClass": "Class for the next level",

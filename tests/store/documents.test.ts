@@ -86,6 +86,11 @@ describe("documents store", () => {
     expect(hit).toBe(true);
     const log = docs().encounters[eid]?.log ?? [];
     expect(log.some((e) => e.lines.some((l) => /Goblin Warrior/.test(l)))).toBe(true);
+    // Each note is also kept as the engine's message (code and parameters), for translation.
+    for (const entry of log.filter((e) => e.tone === "notes")) {
+      expect(entry.messages?.map((m) => m.text)).toEqual(entry.lines);
+      for (const m of entry.messages ?? []) expect(typeof m.code).toBe("string");
+    }
     expect(useUi.getState().dice.length).toBeGreaterThan(0);
 
     const hurt = docs().characters[aerin]?.state.hp.current;

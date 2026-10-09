@@ -22,32 +22,22 @@ The app never works around a gap with rules of its own.
 
 | Id | What the app is missing | Engine status |
 |---|---|---|
-| R10 | Combatant ids in results | open |
-| R11 | Option previews in the builder | open |
-| R12 | `unassignedValues` | open |
-| R13 | Translatable engine messages | open (large) |
+| R13 | Translatable engine messages | partial: stage 1 of 4 (`5602229`, encounter notes) |
 | R14 | Positions required when the map is in use (proposal) | open, low priority |
-
-### R10. Combatant ids in results
-
-- **Meanwhile.** The dice tray (`DiceTray.tsx`) shows target names.
-- **When done.** Link results to tokens and the rail.
-
-### R11. Option previews
-
-- **Meanwhile.** The builder's live summary updates after a pick.
-- **When done.** Show "AC 16 → 17" on each option (`ChoiceCard.tsx`).
-
-### R12. `unassignedValues`
-
-- **Meanwhile.** Each ability offers every value; assigning a taken value swaps the two
-  (`AbilitiesStep.tsx`, a convenience, not a rule).
-- **When done.** Offer only unassigned values.
 
 ### R13. Translatable engine messages
 
-- **Meanwhile.** App words in `src/i18n/` (English, ready for Italian); engine text stays English.
-- **When done.** Translate by code in the i18n catalogs; keep `text` as the fallback.
+- **Delivered so far (stage 1).** Encounter results carry `messages` (`{ code, params, text }`,
+  one per note). The facade passes them on (`EncounterChange.messages`) and the combat log
+  stores them with each entry (`LogEntry.messages`, kept on load only while they match the
+  lines one for one), so entries saved now can be translated later. Many notes still come as
+  code `text` (the English sentence in `params.text`); play notes, refusals and builder strings
+  have no codes yet.
+- **Meanwhile.** App words in `src/i18n/` (English, ready for Italian); the log shows `text`.
+- **When an Italian catalog is added.** Render log entries from `messages` with the engine's
+  `renderMessage(message, catalog)` (an engine value: call it in the worker through the facade,
+  never on the main thread), falling back to `text`; then wire the later stages (play notes,
+  refusals, builder) as they land.
 
 ### R14. Positions required (proposal)
 
@@ -67,4 +57,7 @@ The app never works around a gap with rules of its own.
 | R6 | Cunning / Brutal Strike | `b22a78e` (main) | "Strike effects" in the composer from `OptionEntry.strikes` (unavailable ones disabled with the engine's reason, not hidden), merged into the attack |
 | R7 | Rest-change options as played | `7ec7459` (main) | facade `evaluatePlay` (`evaluate(playBuild(…))`) for the sheet's "Today's picks" (`RestChoices.tsx`) |
 | R8 | Magic item bases | `bcc01bd` (main) | "Add an item" offers only `magicItemBases` (facade `magicItemBases`, `useMagicItemBases`) |
+| R10 | Combatant ids in results | `0d8c00f` (main) | target names in the dice tray (spell, save effect and follow-up targets) are links: a click selects the combatant (rail and map) and pings its square (`DiceTray.tsx` `TargetName`, `useUi.focus`, `EncounterPage.tsx`) |
+| R11 | Option previews | `2144460` (main) | each builder option shows what it would change ("AC 16 → 17", `ChoiceCard.tsx` `PreviewLine`, facade `optionPreviews`, `useOptionPreviews`), Ability Score Improvement rows too; not on the sheet's "Today's picks" (the saved build isn't the build as played) |
+| R12 | `unassignedValues` | `5dbf55e` (main) | the ability selects offer only the engine's unassigned values plus the ability's own (`AbilitiesView.unassigned`); the swap convenience is gone |
 | R9 | Rolls outside an encounter | `51d904d` (main) | sheet roll buttons (checks, saves, attack rolls) call `rollCheck` (facade, `rollTest` in `store/dice.ts`); the tray shows mode, reasons, outcome |

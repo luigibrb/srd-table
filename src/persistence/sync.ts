@@ -62,10 +62,18 @@ export async function loadAll(): Promise<void> {
 
 function readLog(raw: unknown): LogEntry[] {
   if (!Array.isArray(raw)) return [];
-  return raw.filter(
-    (e): e is LogEntry =>
-      typeof e === "object" && e !== null && Array.isArray((e as LogEntry).lines),
-  );
+  return raw
+    .filter(
+      (e): e is LogEntry =>
+        typeof e === "object" && e !== null && Array.isArray((e as LogEntry).lines),
+    )
+    .map((e) => {
+      // Messages are kept only when they still match the lines one for one.
+      if (e.messages === undefined) return e;
+      if (Array.isArray(e.messages) && e.messages.length === e.lines.length) return e;
+      const { messages: _, ...rest } = e;
+      return rest;
+    });
 }
 
 /** Save documents and settings when they change (debounced), deleting removed ones. */

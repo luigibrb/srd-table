@@ -72,6 +72,16 @@ function Table({ record }: { record: EncounterRecord }) {
     if (!gm && own && !pinned) select(own.id, false);
     else if (gm && !pinned && current) select(current, false);
   }, [view, gm, own, pinned, current, select]);
+  // A target clicked in a dice result: selected as if its token were, and pinged on the map.
+  const focus = useUi((s) => s.focus);
+  useEffect(() => {
+    if (!focus || !view) return;
+    useUi.getState().focusCombatant(null);
+    const target = view.combatants.find((c) => c.id === focus);
+    if (!target) return;
+    select(target.id);
+    if (target.position) useTableUi.getState().setPing(target.position);
+  }, [focus, view, select]);
   // A new turn releases a pinned selection.
   // biome-ignore lint/correctness/useExhaustiveDependencies: only when the turn changes
   useEffect(() => {

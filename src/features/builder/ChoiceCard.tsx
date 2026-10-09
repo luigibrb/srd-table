@@ -2,7 +2,8 @@
  * One of the engine's choices: every option it lists, those that can't be picked greyed out with
  * the engine's reason. Picks go to `setChoice` (through a preview); a refusal shows its reasons
  * here. Repeatable picks (Ability Score Improvement) have a count per option; replacements
- * ("Replace one…") pick `[old, new]`.
+ * ("Replace one…") pick `[old, new]`. With a character id, each option shows the sheet numbers it
+ * would change (the engine's `previewOption`, compared with the choice left unanswered).
  */
 
 import { Popover } from "radix-ui";
@@ -13,8 +14,9 @@ import { OptionButton } from "@/components/OptionButton";
 import { SrdText } from "@/components/SrdText";
 import { Button, cx, Reasons } from "@/components/ui";
 import { VirtualList } from "@/components/VirtualList";
-import type { ChoiceView } from "@/engine/facade";
+import type { ChoiceView, StatChange } from "@/engine/facade";
 import { t } from "@/i18n";
+import { useOptionPreviews } from "@/queries";
 
 const SEARCH_FROM = 12;
 const VIRTUAL_FROM = 40;
@@ -23,8 +25,11 @@ export function ChoiceCard({
   choice,
   onPick,
   past,
+  characterId,
 }: {
   choice: ChoiceView;
+  /** The character whose saved build the choice belongs to: options then show their previews. */
+  characterId?: string;
   /** Send new values; resolves to refusal reasons or `null`. */
   onPick: (values: readonly string[]) => Promise<readonly string[] | null>;
   past?: boolean;
@@ -32,6 +37,7 @@ export function ChoiceCard({
   const [reasons, setReasons] = useState<readonly string[] | null>(null);
   const [busy, setBusy] = useState(false);
   const missing = Math.max(0, choice.required - choice.selected.length);
+  const { data: previews } = useOptionPreviews(choice.fixed ? undefined : characterId, choice.key);
 
   async function pick(values: readonly string[]) {
     setBusy(true);
@@ -71,11 +77,25 @@ export function ChoiceCard({
       ) : choice.replaces ? (
         <Replacement choice={choice} onPick={pick} busy={busy} />
       ) : choice.repeats ? (
-        <Increases choice={choice} onPick={pick} />
+        <Increases choice={choice} onPick={pick} previews={previews} />
       ) : (
-        <Options choice={choice} onPick={pick} past={past ?? false} />
+        <Options choice={choice} onPick={pick} past={past ?? false} previews={previews} />
       )}
     </section>
+  );
+}
+
+type Previews = Readonly<Record<string, readonly StatChange[]>> | undefined;
+
+/** "AC 16 → 17 · HP 10 → 11": what an option would change, as the engine reports it. */
+function PreviewLine({ changes }: { changes: readonly StatChange[] | undefined }) {
+  if (!changes?.length) return null;
+  return (
+    <span className="block font-semibold text-ink">
+      {changes
+        .map((c) => t("builder.statChange", { label: c.label, before: c.before, after: c.after }))
+        .join(" · ")}
+    </span>
   );
 }
 
@@ -99,10 +119,12 @@ function FixedAnswer({ choice }: { choice: ChoiceView }) {
 function Options({
   choice,
   onPick,
+  previews,
 }: {
   choice: ChoiceView;
   onPick: (values: readonly string[]) => void;
   past: boolean;
+  previews: Previews;
 }) {
   const [query, setQuery] = useState("");
   const selected = new Set(choice.selected);
@@ -124,7 +146,14 @@ function Options({
         on={selected.has(option.id)}
         onClick={() => toggle(option.id)}
         icon={selected.has(option.id) ? "check" : undefined}
-        detail={option.description ? firstLine(option.description) : undefined}
+        detail={
+          previews?.[option.id] || option.description ? (
+            <>
+              <PreviewLine changes={previews?.[option.id]} />
+              {option.description && firstLine(option.description)}
+            </>
+          ) : undefined
+        }
       >
         {option.name}
       </OptionButton>
@@ -211,9 +240,11 @@ export function MoreText({ title, text }: { title: string; text: string }) {
 function Increases({
   choice,
   onPick,
+  previews,
 }: {
   choice: ChoiceView;
   onPick: (values: readonly string[]) => void;
+  previews: Previews;
 }) {
   const counts = new Map<string, number>();
   for (const v of choice.selected) counts.set(v, (counts.get(v) ?? 0) + 1);
@@ -225,6 +256,9 @@ function Increases({
           <li key={o.id} className="flex items-center gap-2 rounded border border-edge px-2 py-1">
             <span className="flex-1">
               {o.name}
+              <span className="text-[13px]">
+                <PreviewLine changes={previews?.[o.id]} />
+              </span>
               {o.unavailable && (
                 <span className="block text-[13px] text-ink-muted italic">{o.unavailable}</span>
               )}

@@ -133,7 +133,7 @@ function Builder({ id, view, search }: { id: string; view: BuildView; search: Bu
         )}
         <div className="min-w-0 space-y-4">
           {level === null ? (
-            <StepContent view={view} step={step} name={name} edit={edit} />
+            <StepContent id={id} view={view} step={step} name={name} edit={edit} />
           ) : (
             <LevelPanel
               id={id}
@@ -218,11 +218,13 @@ function StepNav({
 }
 
 function StepContent({
+  id,
   view,
   step,
   name,
   edit,
 }: {
+  id: string;
   view: BuildView;
   step: Step;
   name: string;
@@ -288,6 +290,7 @@ function StepContent({
         <ChoiceCard
           key={c.key}
           choice={c}
+          characterId={id}
           onPick={(values) => edit({ type: "choice", key: c.key, values })}
         />
       ))}

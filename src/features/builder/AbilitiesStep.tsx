@@ -197,17 +197,20 @@ function BaseScore({
     );
   }
 
-  const pool =
-    abilities.method === "standard_array" ? abilities.standard_array : abilities.rolled_pool;
-  const values = [...new Set(pool)].sort((a, b) => b - a);
+  // The engine's unassigned values (each copy once), plus the one this ability holds.
+  const values = [...(current === undefined ? [] : [current]), ...abilities.unassigned]
+    .filter((v, i, all) => all.indexOf(v) === i)
+    .sort((a, b) => b - a);
   return (
     <select
       className="field max-w-[6rem]"
       aria-label={label}
       value={current ?? ""}
       onChange={(e) => {
-        const value = e.target.value === "" ? undefined : Number(e.target.value);
-        onScores(assign(base, ability, value, pool));
+        const next: Record<string, number> = { ...base };
+        if (e.target.value === "") delete next[ability];
+        else next[ability] = Number(e.target.value);
+        onScores(next as AbilityMap);
       }}
     >
       <option value="">{t("builder.unassigned")}</option>
@@ -218,28 +221,6 @@ function BaseScore({
       ))}
     </select>
   );
-}
-
-/**
- * Put `value` on `ability`; if another ability already holds the last copy of that value, the two
- * swap (a convenience: the engine still validates the result).
- */
-function assign(
-  base: AbilityMap,
-  ability: Ability,
-  value: number | undefined,
-  pool: readonly number[],
-): AbilityMap {
-  const next: Record<string, number | undefined> = { ...base, [ability]: value };
-  if (value !== undefined) {
-    const copies = pool.filter((v) => v === value).length;
-    const holders = abilityIds().filter((a) => next[a] === value);
-    if (holders.length > copies) {
-      const other = holders.find((a) => a !== ability);
-      if (other) next[other] = base[ability];
-    }
-  }
-  return Object.fromEntries(Object.entries(next).filter(([, v]) => v !== undefined)) as AbilityMap;
 }
 
 function sameBonus(a: AbilityMap, b: AbilityMap): boolean {

@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { Encounter } from "srd-rules-engine";
 import { beforeEach, describe, expect, it } from "vitest";
 import { setEngine } from "../../src/engine/client";
+import type { ActionResult } from "../../src/engine/facade";
 import { nodeFacade } from "../../src/engine/node";
 import { useTableUi } from "../../src/features/encounter/tableUi";
 import { newId, useDocuments } from "../../src/store/documents";
@@ -140,6 +141,43 @@ describe("encounter table", () => {
     const options = await screen.findByRole("region", { name: "Options" });
     await userEvent.click(within(options).getByRole("button", { name: "End turn" }));
     await waitFor(() => expect(useDocuments.getState().encounters[id]?.encounter.turn).toBe(1));
+  });
+
+  it("links a result's targets to the combatants: a click selects and pings it", async () => {
+    const r = await engine.applyEncounterAction(await engine.newEncounter(), {}, [
+      { type: "add_monster", monster: "goblin-warrior" },
+      { type: "add_monster", monster: "zombie" },
+      { type: "place", id: "zombie", x: 3, y: 4 },
+      { type: "set_initiative", id: "goblin-warrior", value: 20 },
+      { type: "set_initiative", id: "zombie", value: 5 },
+      { type: "start" },
+    ]);
+    if (!r.ok) throw new Error(r.reasons.join("; "));
+    const id = storeEncounter(r.encounter);
+    await renderApp(`/encounters/${id}`);
+    await screen.findByRole("navigation", { name: "Initiative" }, { timeout: 15_000 });
+    await waitFor(() => expect(useTableUi.getState().selected).toBe("goblin-warrior"));
+
+    // A save effect's result as the engine gives it: each target with its combatant id.
+    const save = { dc: 12, roll: { rolls: [4], d20: 4, mode: "normal" }, bonus: 0, total: 4 };
+    useUi.getState().showDice([
+      {
+        kind: "action",
+        who: "Goblin Warrior",
+        result: {
+          action: "Test",
+          targets: [{ id: "zombie", target: 1, name: "Zombie", save: { ...save, success: false } }],
+          damage: null,
+        } as unknown as NonNullable<ActionResult>,
+      },
+    ]);
+    const [tray] = screen.getAllByRole("region", { name: "Dice results" });
+    if (!tray) throw new Error("no dice tray");
+    const [zombie] = await within(tray).findAllByRole("button", { name: "Zombie" });
+    if (!zombie) throw new Error("no target link");
+    await userEvent.click(zombie);
+    await waitFor(() => expect(useTableUi.getState().selected).toBe("zombie"));
+    expect(useTableUi.getState().ping).toMatchObject({ x: 3, y: 4 });
   });
 
   it("explores outside a fight: the GM's pace, a halt answered, a point revealed", async () => {

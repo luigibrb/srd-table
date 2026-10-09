@@ -185,6 +185,7 @@ export function LevelPanel({
           <ChoiceCard
             key={c.key}
             choice={c}
+            characterId={id}
             past={past}
             onPick={(values) => request({ type: "choice", key: c.key, values }, { past })}
           />

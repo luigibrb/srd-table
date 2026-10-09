@@ -1,6 +1,6 @@
 /**
- * UI state that isn't a document: toasts (setter and play notes), dice results on screen, and
- * the view (GM or a player). Nothing here is persisted except the view, per browser.
+ * UI state that isn't a document: toasts (setter and play notes), dice results on screen, a
+ * combatant a result points at (the encounter screen selects it), and the view (GM or a player). Nothing here is persisted except the view, per browser.
  */
 
 import type { D20TestResult, RolledDamage, RollResult } from "srd-rules-engine";
@@ -52,10 +52,13 @@ interface UiState {
   toasts: readonly Toast[];
   dice: readonly DiceShown[];
   role: Role;
+  /** A combatant a result was clicked for: the encounter screen selects it, then clears this. */
+  focus: string | null;
   toast(lines: readonly string[], tone?: ToastTone, title?: string): void;
   dismissToast(id: number): void;
   showDice(items: readonly DiceInput[]): void;
   dismissDice(id: number): void;
+  focusCombatant(id: string | null): void;
   setRole(role: Role): void;
 }
 
@@ -79,6 +82,7 @@ export const useUi = create<UiState>()((set) => ({
   toasts: [],
   dice: [],
   role: savedRole(),
+  focus: null,
   toast(lines, tone = "info", title) {
     if (!lines.length) return;
     const toast: Toast = { id: nextId++, tone, lines, ...(title ? { title } : {}) };
@@ -94,6 +98,9 @@ export const useUi = create<UiState>()((set) => ({
   },
   dismissDice(id) {
     set((s) => ({ dice: s.dice.filter((d) => d.id !== id) }));
+  },
+  focusCombatant(focus) {
+    set({ focus });
   },
   setRole(role) {
     try {

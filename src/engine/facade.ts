@@ -60,6 +60,7 @@ import {
   issuesForStep,
   lookup,
   MAX_ATTUNED,
+  type Message,
   type MovePreview,
   magicItemBases,
   type OptionView,
@@ -83,6 +84,7 @@ import {
   type RollResult,
   reachableSquares,
   reconcileState,
+  resolve,
   roll,
   rollAbilityScores,
   rollCheck,
@@ -97,6 +99,7 @@ import {
   skillName,
   startingEquipment,
   type TableName,
+  unassignedValues,
   type ValidationReport,
   validateState,
 } from "srd-rules-engine";
@@ -116,6 +119,7 @@ export interface Refusal {
 export type Outcome<T> = ({ readonly ok: true } & T) | Refusal;
 
 export type LevelUpOption = builder.LevelUpOption;
+export type StatChange = builder.StatChange;
 export type StateIssue = ReturnType<typeof validateState>[number];
 
 // --- builder views --------------------------------------------------------------------------
@@ -166,6 +170,8 @@ export interface AbilitiesView {
   readonly method: AbilityMethod | null;
   readonly standard_array: readonly number[];
   readonly rolled_pool: readonly number[];
+  /** Standard array or rolled values not assigned to an ability yet, highest first. */
+  readonly unassigned: readonly number[];
   readonly point_buy_rules: PointBuyRules;
   /** Budget and per-ability costs (point buy only). */
   readonly point_buy: PointBuyStatus | null;
@@ -252,6 +258,8 @@ export interface EncounterChange {
   /** Character states the actions changed, by character key. */
   readonly states: Readonly<Record<string, CharacterState>>;
   readonly notes: readonly string[];
+  /** The notes as codes and parameters, for translation (`messages[i].text === notes[i]`). */
+  readonly messages: readonly Message[];
   /** The decision the list stopped at (also `encounter.pending`). */
   readonly pending: Pending | null;
   /** Actions applied before the one that stopped for a decision. */
@@ -373,6 +381,14 @@ export interface EngineFacade {
   editBuild(build: CharacterBuild, edit: BuildEdit): Promise<Outcome<BuildChange>>;
   /** What an edit would remove and ask again, without applying it. */
   previewEdit(build: CharacterBuild, edit: BuildEdit): Promise<Outcome<ChangePreview>>;
+  /**
+   * The sheet numbers each option of a choice would change (`builder.previewOption`), by option
+   * id; options that change nothing are left out.
+   */
+  optionPreviews(
+    build: CharacterBuild,
+    choiceKey: string,
+  ): Promise<Readonly<Record<string, readonly StatChange[]>>>;
   rollAbilityScores(): Promise<readonly AbilityRoll[]>;
 
   // play
@@ -508,6 +524,18 @@ export function createInProcessFacade(options: FacadeOptions): EngineFacade {
           ),
         ),
       ),
+    optionPreviews: (build, choiceKey) =>
+      content.run("builder", (catalog) => {
+        const res = resolve(build, catalog);
+        const choice = res.choices.find((c) => c.key === choiceKey);
+        if (!choice) return {};
+        return Object.fromEntries(
+          res
+            .options(choice)
+            .map((o) => [o.id, builder.previewOption(build, catalog, choiceKey, o.id)] as const)
+            .filter(([, changes]) => changes.length > 0),
+        );
+      }),
     rollAbilityScores: async () => rollAbilityScores(rng),
 
     createState: (build) => content.run("play", (catalog) => createState(build, catalog)),
@@ -544,18 +572,21 @@ export function createInProcessFacade(options: FacadeOptions): EngineFacade {
           let current = encounter;
           const states: Record<string, CharacterState> = {};
           const notes: string[] = [];
+          const messages: Message[] = [];
           const results: NonNullable<ActionResult>[] = [];
           let applied = 0;
           for (const a of listOf(action)) {
             const result = engineApplyEncounterAction(current, a, { catalog, characters, rng });
             current = result.encounter;
             notes.push(...result.notes);
+            messages.push(...result.messages);
             if (result.result) results.push(result.result);
             if (result.pending) {
               return {
                 encounter: current,
                 states,
                 notes,
+                messages,
                 pending: result.pending,
                 applied,
                 results,
@@ -569,7 +600,15 @@ export function createInProcessFacade(options: FacadeOptions): EngineFacade {
               characters[key] = { build: docs.build, state };
             }
           }
-          return { encounter: current, states, notes, pending: null, applied, results };
+          return {
+            encounter: current,
+            states,
+            notes,
+            messages,
+            pending: null,
+            applied,
+            results,
+          };
         }),
       ),
     encounterView: (encounter, party) =>
@@ -754,6 +793,15 @@ function buildView(build: CharacterBuild, catalog: Catalog): BuildView {
       method: build.ability_method,
       standard_array: catalog.creation.standard_array,
       rolled_pool: build.rolled_pool,
+      unassigned:
+        build.ability_method === "standard_array" || build.ability_method === "roll"
+          ? unassignedValues(
+              build.ability_method,
+              build.base_scores,
+              catalog.creation,
+              build.rolled_pool,
+            )
+          : [],
       point_buy_rules: rules,
       point_buy:
         build.ability_method === "point_buy" ? pointBuyStatus(build.base_scores, rules) : null,

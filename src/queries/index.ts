@@ -46,6 +46,19 @@ export function useBuildView(id: string) {
   });
 }
 
+/** What each option of a builder choice would change on the sheet (`previewOption`). */
+export function useOptionPreviews(id: string | undefined, choiceKey: string) {
+  const content = useContentKey();
+  const rev = useRev(id);
+  const build = useDocuments((s) => (id ? s.characters[id]?.build : undefined));
+  return useQuery({
+    queryKey: ["option-previews", id, choiceKey, rev, content],
+    queryFn: () => engine().optionPreviews(build as NonNullable<typeof build>, choiceKey),
+    enabled: build !== undefined,
+    placeholderData: keepPreviousData,
+  });
+}
+
 /** The items a magic item can be made from (`magicItemBases`). */
 export function useMagicItemBases(magicItemId: string | null) {
   const content = useContentKey();

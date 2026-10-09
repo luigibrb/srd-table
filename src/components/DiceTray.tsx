@@ -4,7 +4,7 @@
  * `DiceCard` without touching anything else.
  */
 
-import { useEffect } from "react";
+import { type ReactNode, useEffect } from "react";
 import type {
   AttackResult,
   CheckResult,
@@ -128,7 +128,7 @@ function Line({
   outcome,
   tone,
 }: {
-  label: string;
+  label: ReactNode;
   dice: readonly number[];
   kept?: number;
   modifier?: number;
@@ -183,7 +183,7 @@ function D20({
   outcome,
   tone,
 }: {
-  label: string;
+  label: ReactNode;
   roll: D20Roll;
   bonus: number;
   total: number;
@@ -196,7 +196,12 @@ function D20({
       : ` (${t(roll.mode === "advantage" ? "dice.advantage" : "dice.disadvantage")})`;
   return (
     <Line
-      label={`${label}${mode}`}
+      label={
+        <>
+          {label}
+          {mode}
+        </>
+      }
       dice={roll.rolls}
       kept={roll.d20}
       modifier={bonus}
@@ -226,7 +231,7 @@ function Damage({ damage }: { damage: RolledDamage }) {
   );
 }
 
-function SaveLine({ save, label }: { save: SaveResult; label: string }) {
+function SaveLine({ save, label }: { save: SaveResult; label: ReactNode }) {
   const outcome = save.automatic_failure
     ? t("dice.autoFail", { condition: save.automatic_failure })
     : save.legendary_resistance
@@ -236,7 +241,11 @@ function SaveLine({ save, label }: { save: SaveResult; label: string }) {
         : t("dice.failure");
   return (
     <D20
-      label={`${label} · ${t("dice.vsDc", { dc: save.dc })}`}
+      label={
+        <>
+          {label} · {t("dice.vsDc", { dc: save.dc })}
+        </>
+      }
       roll={save.roll}
       bonus={save.bonus}
       total={save.total}
@@ -256,7 +265,11 @@ export function ActionRolls({ result }: { result: NonNullable<ActionResult> }) {
           <div key={i}>
             {target.attack && (
               <D20
-                label={`${target.name} · ${t("dice.attack")}`}
+                label={
+                  <>
+                    <TargetName target={target} /> · {t("dice.attack")}
+                  </>
+                }
                 roll={target.attack.roll}
                 bonus={result.attack_bonus ?? 0}
                 total={target.attack.total}
@@ -270,12 +283,14 @@ export function ActionRolls({ result }: { result: NonNullable<ActionResult> }) {
                 tone={target.attack.hit ? "good" : "bad"}
               />
             )}
-            {target.save && <SaveLine save={target.save} label={target.name} />}
+            {target.save && <SaveLine save={target.save} label={<TargetName target={target} />} />}
           </div>
         ))}
         {result.damage && <Damage damage={result.damage} />}
         {result.follow_up?.targets.map((target, i) =>
-          target.save ? <SaveLine key={`f${i}`} save={target.save} label={target.name} /> : null,
+          target.save ? (
+            <SaveLine key={`f${i}`} save={target.save} label={<TargetName target={target} />} />
+          ) : null,
         )}
         {result.follow_up?.damage && <Damage damage={result.follow_up.damage} />}
       </div>
@@ -286,7 +301,9 @@ export function ActionRolls({ result }: { result: NonNullable<ActionResult> }) {
       <div className="space-y-1">
         <div className="text-sm font-semibold">{result.action}</div>
         {result.targets.map((target, i) =>
-          target.save ? <SaveLine key={i} save={target.save} label={target.name} /> : null,
+          target.save ? (
+            <SaveLine key={i} save={target.save} label={<TargetName target={target} />} />
+          ) : null,
         )}
         {result.damage && <Damage damage={result.damage} />}
       </div>
@@ -294,6 +311,25 @@ export function ActionRolls({ result }: { result: NonNullable<ActionResult> }) {
   }
   if ("skill" in result) return <Check result={result} />;
   return <SaveLine save={result} label={result.name} />;
+}
+
+/**
+ * A creature a result names: with its combatant id (in an encounter), a link that selects it on
+ * the rail and the map.
+ */
+function TargetName({ target }: { target: { readonly id: string | null; readonly name: string } }) {
+  const focus = useUi((s) => s.focusCombatant);
+  if (target.id === null) return <>{target.name}</>;
+  const id = target.id;
+  return (
+    <button
+      type="button"
+      className="font-semibold text-ink underline decoration-edge-strong underline-offset-2 hover:decoration-blue"
+      onClick={() => focus(id)}
+    >
+      {target.name}
+    </button>
+  );
 }
 
 function Attack({ result }: { result: AttackResult }) {

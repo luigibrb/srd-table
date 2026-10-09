@@ -13,6 +13,7 @@ import type {
   CharacterState,
   Encounter,
   EncounterAction,
+  Message,
   PlayAction,
 } from "srd-rules-engine";
 import { create } from "zustand";
@@ -47,6 +48,11 @@ export interface LogEntry {
   readonly round: number;
   readonly tone: "notes" | "refusal" | "decision";
   readonly lines: readonly string[];
+  /**
+   * The engine's notes as codes and parameters (one per line), kept so the log can be translated
+   * later (engine gap R13); `lines` is their English text.
+   */
+  readonly messages?: readonly Message[];
 }
 
 export interface EncounterRecord {
@@ -410,7 +416,7 @@ export const useDocuments = create<DocumentsState>()((set, get) => {
           if (!current) return s;
           let log = appendLog(
             current,
-            { tone: "notes", lines: result.notes },
+            { tone: "notes", lines: result.notes, messages: result.messages },
             result.encounter.round,
           );
           if (result.pending) {
