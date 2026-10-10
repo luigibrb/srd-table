@@ -47,8 +47,9 @@ The app never works around a gap with rules of its own.
 - **When an Italian catalog is added.** Render log entries from `messages` with the engine's
   `renderMessage(message, catalog)` (an engine value: call it in the worker through the facade,
   never on the main thread), falling back to `text`. Then pass play `messages` through the
-  facade for the toasts, render the dice results box's reasons from `reason_messages`, and wire
-  the last stage (decision questions, refusals, builder) as it lands.
+  facade for the toasts, refusal `details` in `Refusal` (rendered where `Reasons` shows them),
+  the options' `reason_message`, the dice results box's `reason_messages`, and wire the last
+  stage (builder) as it lands.
 
 ### R15–R17. Manual play
 
