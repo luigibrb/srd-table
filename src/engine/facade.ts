@@ -219,6 +219,8 @@ export type BuildEdit =
 export interface BuildChange {
   readonly build: CharacterBuild;
   readonly notes: readonly string[];
+  /** The notes as codes and parameters, for translation (`messages[i].text === notes[i]`). */
+  readonly messages: readonly Message[];
 }
 
 export interface ChangePreview extends BuildChange {

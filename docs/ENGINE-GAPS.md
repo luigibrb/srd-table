@@ -25,11 +25,16 @@ The app never works around a gap with rules of its own.
 | R15 | Declared actions: costs only, outcome by hand (manual play) | open |
 | R16 | Own dice: rolls that wait for entered numbers (manual play) | open |
 | R17 | GM override of a refusal (manual play) | open |
-| R13 | Translatable engine messages | partial: stage 4 of 5 (`5602229` … `1a0ee68`: notes, roll reasons, refusals, decision questions) |
 
-### R13. Translatable engine messages
+### R13. Translatable engine messages (engine side done; the app's rendering to do)
 
-- **Delivered so far (stages 1–4).** Encounter results carry `messages` (`{ code, params, text }`,
+- **Delivered (stages 1–5, the last `3c23939`).** Every engine string the app shows has a code
+  (650 in `MESSAGES_EN`); content (names, choice labels, descriptions) and the sheet's number
+  breakdowns are not messages, by design. Since stage 5: `Issue.detail`,
+  `OptionView.unavailable_message`, `LevelUpOption.unavailable_message`, `BuildResult.messages`
+  (facade `BuildChange.messages`), `ChangePreview.pending[].detail`, `StateIssue.detail`,
+  `OptionEntry.label_message` / `note_message`, `StrikeOption.cost_message`; `StatChange.stat`
+  to translate a preview's label by. Earlier stages: Encounter results carry `messages` (`{ code, params, text }`,
   one per note). The facade passes them on (`EncounterChange.messages`) and the combat log
   stores them with each entry (`LogEntry.messages`, kept on load only while they match the
   lines one for one), so entries saved now can be translated later. Since `d0496d9` every
@@ -81,6 +86,7 @@ The app never works around a gap with rules of its own.
 | R7 | Rest-change options as played | `7ec7459` (main) | facade `evaluatePlay` (`evaluate(playBuild(…))`) for the sheet's "Today's picks" (`RestChoices.tsx`) |
 | R8 | Magic item bases | `bcc01bd` (main) | "Add an item" offers only `magicItemBases` (facade `magicItemBases`, `useMagicItemBases`) |
 | R14 | Positions required (a GM setting) | `9c89a34` (main) | "Off the map" select in the GM's combat controls (`CombatPanel.tsx`: warn only / refuse what needs a distance, `set_positions`); the off-map notice says the engine refuses under `required` (`OffMapNotice.tsx`); refusals and disabled options come from the engine (`off_map`) |
+| R13 | Message codes for translation | `5602229` … `3c23939` (main) | combat-log entries keep `messages` (notes and decision questions); rendering them in Italian is app work, below |
 | R10 | Combatant ids in results | `0d8c00f` (main) | target names in the dice tray (spell, save effect and follow-up targets) are links: a click selects the combatant (rail and map) and pings its square (`DiceTray.tsx` `TargetName`, `useUi.focus`, `EncounterPage.tsx`) |
 | R11 | Option previews | `2144460` (main) | each builder option shows what it would change ("AC 16 → 17", `ChoiceCard.tsx` `PreviewLine`, facade `optionPreviews`, `useOptionPreviews`), Ability Score Improvement rows too; not on the sheet's "Today's picks" (the saved build isn't the build as played) |
 | R12 | `unassignedValues` | `5dbf55e` (main) | the ability selects offer only the engine's unassigned values plus the ability's own (`AbilitiesView.unassigned`); the swap convenience is gone |
