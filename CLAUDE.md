@@ -294,14 +294,10 @@ docs/            # ARCHITECTURE.md (decisions), ENGINE-GAPS.md (what the UI need
 
 Where the last session stopped, for the next one to pick up:
 
-1. **Italian engine catalog: done, not yet committed when this note was written** — check
-   `git status`: if uncommitted, run `npm run check && npm run e2e`, then commit ("Engine texts
-   in Italian, ready for more languages"). Pieces: `src/i18n/engine/` (catalog + registry),
-   `src/engine/messages.ts`, facade `setLocale`/`renderMessages`/`localized`, `src/store/locale.ts`
-   (`applyLocale`, `startLocaleSync`), `useRenderedMessages` (combat log, decision dialog),
-   tests `tests/engine/languages.test.ts` and an Italian e2e flow. R18 filed in the engine's
-   `REQUESTS.md` (plurals, list joiners, roll labels, step/alignment codes) and tracked in
-   `docs/ENGINE-GAPS.md`. Not yet done: a nudge to the engine session about R18 (`SendMessage`).
+1. **Italian engine catalog: done and committed (`c130ecb`)**, checks and e2e passing. Pieces:
+   `src/i18n/engine/` (catalog + registry), `src/engine/messages.ts`, facade `setLocale` /
+   `renderMessages` / `localized`, `src/store/locale.ts`, `useRenderedMessages` (combat log,
+   decision dialog). R18 filed in the engine's `REQUESTS.md` and tracked in `docs/ENGINE-GAPS.md`.
 2. **R15 delivered by the engine (`98c6df0`, declared actions for manual play): not picked up.**
    Read `../srd-rules-engine/docs/RESPONSES.md` > R15, `npm run engine:update`, then build the
    "… by hand" controls described in `docs/ARCHITECTURE.md` > "Manual play" and
