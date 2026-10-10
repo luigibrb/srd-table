@@ -226,3 +226,25 @@ test("a reload restores characters, play states and encounters from IndexedDB", 
   await expect(page.getByRole("article").filter({ hasText: "Aerin" })).toContainText("23 / 28");
   await expect(page.getByRole("article")).toHaveCount(2);
 });
+
+test("the app and the engine speak Italian, chosen in Settings", async ({ page }) => {
+  await page.goto("/#/settings");
+  await button(page, "Italiano").click();
+  await expect(page.getByRole("heading", { name: "Impostazioni" })).toBeVisible();
+
+  // The engine's names and reasons come from the worker, in Italian.
+  await page.getByRole("link", { name: "Personaggi" }).click();
+  await button(page, "Nuovo personaggio").click();
+  await page.getByRole("button", { name: /^Fighter/ }).click();
+  const steps = page.getByRole("navigation", { name: "Passi" });
+  await expect(steps.getByRole("button", { name: /Punteggi di caratteristica/ })).toBeVisible();
+  await steps.getByRole("button", { name: /Background/ }).click();
+  await page.getByRole("button", { name: /^Soldier/ }).click();
+  await steps.getByRole("button", { name: /Abilità e strumenti/ }).click();
+  await expect(page.getByText("hai già competenza da Soldier").first()).toBeVisible();
+
+  // Back to English for the other flows' browser state.
+  await page.goto("/#/settings");
+  await button(page, "English").click();
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+});

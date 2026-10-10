@@ -5,9 +5,10 @@
  */
 
 import { keepPreviousData, QueryClient, useQuery } from "@tanstack/react-query";
-import type { AreaRequest, Encounter, EncounterAction, TableName } from "srd-rules-engine";
+import type { AreaRequest, Encounter, EncounterAction, Message, TableName } from "srd-rules-engine";
 import { engine } from "@/engine/client";
 import { partyOf, useDocuments } from "@/store/documents";
+import { useLocale } from "@/store/locale";
 import { useSettings } from "@/store/settings";
 
 export function createQueryClient(): QueryClient {
@@ -23,10 +24,14 @@ export function createQueryClient(): QueryClient {
   });
 }
 
-/** Changes when the catalog changes (packs, sources): every derived view depends on it. */
+/**
+ * Changes when the catalog changes (packs, sources) or the language engine texts are rendered in:
+ * every derived view depends on both.
+ */
 function useContentKey(): string {
   const { packs, sources } = useSettings((s) => s.settings);
-  return `${packs.join(",")}|${sources?.join(",") ?? "*"}`;
+  const locale = useLocale((s) => s.applied);
+  return `${packs.join(",")}|${sources?.join(",") ?? "*"}|${locale}`;
 }
 
 function useRev(id: string | undefined): number {
@@ -55,6 +60,20 @@ export function useOptionPreviews(id: string | undefined, choiceKey: string) {
     queryKey: ["option-previews", id, choiceKey, rev, content],
     queryFn: () => engine().optionPreviews(build as NonNullable<typeof build>, choiceKey),
     enabled: build !== undefined,
+    placeholderData: keepPreviousData,
+  });
+}
+
+/**
+ * Stored engine messages (a combat log, a pending decision's question) in the current language,
+ * list by list; `key` identifies the lists (they're compared by it, not deeply). While rendering,
+ * or for a list without messages, callers show the stored English text.
+ */
+export function useRenderedMessages(key: string, lists: readonly (readonly Message[])[]) {
+  const content = useContentKey();
+  return useQuery({
+    queryKey: ["messages", key, content],
+    queryFn: () => engine().renderMessages(lists),
     placeholderData: keepPreviousData,
   });
 }

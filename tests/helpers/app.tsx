@@ -15,6 +15,7 @@ import { closeDb, DB_NAME } from "../../src/persistence/db";
 import { createQueryClient } from "../../src/queries";
 import { createAppRouter } from "../../src/routes/router";
 import { useDocuments } from "../../src/store/documents";
+import { applyLocale, startLocaleSync, useLocale } from "../../src/store/locale";
 import { DEFAULT_SETTINGS, useSettings } from "../../src/store/settings";
 import { useUi } from "../../src/store/ui";
 
@@ -36,9 +37,14 @@ export async function resetStores(): Promise<void> {
   useDocuments.setState({ hydrated: true, characters: {}, encounters: {}, revs: {}, history: {} });
   useSettings.setState({ settings: DEFAULT_SETTINGS });
   useUi.setState({ toasts: [], dice: [], role: { kind: "gm" } });
+  if (useLocale.getState().applied !== "en") await applyLocale("en");
 }
 
+let stopLocaleSync: (() => void) | null = null;
+
 export async function renderApp(path: string) {
+  stopLocaleSync?.();
+  stopLocaleSync = startLocaleSync();
   const router = createAppRouter(createMemoryHistory({ initialEntries: [path] }));
   const queryClient = createQueryClient();
   const result = render(<App router={router} queryClient={queryClient} />);

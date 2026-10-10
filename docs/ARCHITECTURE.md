@@ -224,7 +224,16 @@ Recharge uses by hand; rolls that wait for entered numbers, per combatant (like 
   `Intl.NumberFormat`, `Intl.ListFormat`), in English and Italian (`it.ts`); another language is
   one more catalog, listed in `LOCALES`. The language is a setting (`settings.locale`); a change
   remounts the tree under a `key`, since `t()` isn't reactive. Distances and weights stay in the
-  engine's units (feet, pounds). The SRD's license notice stays in English. Engine strings
+  engine's units (feet, pounds). The SRD's license notice stays in English.
+- **Engine texts in the app's language**: the worker renders them (`src/engine/messages.ts`):
+  `localize` swaps every text that has a message twin (`notes`/`messages`,
+  `reasons`/`reason_messages`, `unavailable`/`unavailable_message`, an issue's `message`/`detail`…)
+  in every facade result except documents; `renderMessages` renders stored ones (the log, a
+  pending question). Catalogs: `src/i18n/engine/<locale>.ts` (every `MessageCode`, typechecked)
+  registered in `ENGINE_LANGUAGES`. Content (spell, feature, condition names) stays English.
+  **Adding a language:** `src/i18n/<locale>.ts` (app words, typed `Messages`), an entry in
+  `LOCALES`, `src/i18n/engine/<locale>.ts` + `ENGINE_LANGUAGES`; the tests check every template
+  parses and keeps every parameter. Plurals with more than one/other need engine R18. Engine strings
   stay as the engine gives them; their `messages` (codes and parameters) are what a
   translation will render (R13 in ENGINE-GAPS.md).
 

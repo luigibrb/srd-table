@@ -4,10 +4,11 @@ import "./styles.css";
 import { App } from "./App";
 import { engine } from "./engine/client";
 import { loadConstants } from "./engine/constants";
-import { setLocale, t } from "./i18n";
+import { t } from "./i18n";
 import { loadAll, startAutosave } from "./persistence/sync";
 import { createQueryClient } from "./queries";
 import { createAppRouter } from "./routes/router";
+import { applyLocale, startLocaleSync } from "./store/locale";
 import { useSettings } from "./store/settings";
 
 const root = createRoot(document.getElementById("root") as HTMLElement);
@@ -20,16 +21,16 @@ root.render(
   </div>,
 );
 
-// The theme and language follow the settings document.
+// The theme follows the settings document; the language too, through `startLocaleSync`.
 useSettings.subscribe((s) => {
   document.documentElement.dataset.theme = s.settings.theme;
-  setLocale(s.settings.locale);
-  document.documentElement.lang = s.settings.locale;
 });
 
 async function start() {
   await loadConstants(engine());
   await loadAll();
+  await applyLocale(useSettings.getState().settings.locale);
+  startLocaleSync();
   startAutosave();
   const router = createAppRouter();
   const queryClient = createQueryClient();

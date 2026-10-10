@@ -61,6 +61,7 @@ import {
   lookup,
   MAX_ATTUNED,
   type Message,
+  type MessageCode,
   type MovePreview,
   magicItemBases,
   type OptionView,
@@ -82,6 +83,7 @@ import {
   type Rng,
   type RolledDamage,
   type RollResult,
+  RuleError,
   reachableSquares,
   reconcileState,
   resolve,
@@ -104,7 +106,9 @@ import {
   validateState,
 } from "srd-rules-engine";
 import { z } from "zod";
+import type { EngineLanguage } from "@/i18n/engine";
 import { ContentLoader, type ContentSettings, type FetchPackFile } from "./content";
+import { engineLanguage, localize, renderAll } from "./messages";
 
 // --- results ------------------------------------------------------------------------------
 
@@ -115,6 +119,8 @@ export type StartingEquipment = ReturnType<typeof startingEquipment>;
 export interface Refusal {
   readonly ok: false;
   readonly reasons: readonly string[];
+  /** `reasons` as messages, when the engine gave them (rendered in the app's language). */
+  readonly reason_messages?: readonly Message[];
 }
 export type Outcome<T> = ({ readonly ok: true } & T) | Refusal;
 
@@ -355,6 +361,10 @@ export interface EngineFacade {
   constants(): Promise<EngineConstants>;
   /** Packs and allowed sources; the catalog is rebuilt on the next operation. */
   configure(settings: ContentSettings): Promise<void>;
+  /** The language engine texts are rendered in (`ENGINE_LANGUAGES`; English otherwise). */
+  setLocale(locale: string): Promise<void>;
+  /** Engine messages rendered in the current language (a stored combat log), list by list. */
+  renderMessages(lists: readonly (readonly Message[])[]): Promise<string[][]>;
   /** Fix the dice (a dev setting, to replay a bug), or `null` for a random seed. */
   setSeed(seed: number | null): Promise<void>;
 
@@ -472,14 +482,25 @@ export function randomSeed(): number {
 export function createInProcessFacade(options: FacadeOptions): EngineFacade {
   const content = new ContentLoader(options.fetchFile);
   let rng: Rng = options.rng ?? seededRng(options.seed ?? randomSeed());
+  let language: EngineLanguage | null = null;
 
-  return {
+  const facade: EngineFacade = {
     constants: async () => ({
-      abilities: ABILITIES.map((id) => ({ id, name: ABILITY_NAMES[id] })),
-      skills: SKILLS.map((id) => ({ id, name: skillName(id), ability: SKILL_ABILITY[id] })),
+      abilities: ABILITIES.map((id) => ({
+        id,
+        name: language?.messages[`ability.${id}`] ?? ABILITY_NAMES[id],
+      })),
+      skills: SKILLS.map((id) => ({
+        id,
+        name: language?.messages[`skill.${id}`] ?? skillName(id),
+        ability: SKILL_ABILITY[id],
+      })),
       damage_types: DAMAGE_TYPES,
-      alignments: ALIGNMENTS.map((id) => ({ id, name: ALIGNMENT_NAMES[id] })),
-      steps: STEPS.map((id) => ({ id, title: STEP_TITLES[id] })),
+      alignments: ALIGNMENTS.map((id) => ({
+        id,
+        name: language?.alignments[id] ?? ALIGNMENT_NAMES[id],
+      })),
+      steps: STEPS.map((id) => ({ id, title: language?.steps[id] ?? STEP_TITLES[id] })),
       max_attuned: MAX_ATTUNED,
       check_skills: checkSkills(),
       point_kinds: POINT_KINDS,
@@ -487,6 +508,10 @@ export function createInProcessFacade(options: FacadeOptions): EngineFacade {
     async configure(settings) {
       content.configure(settings);
     },
+    async setLocale(locale) {
+      language = engineLanguage(locale);
+    },
+    renderMessages: async (lists) => lists.map((list) => renderAll(list, language)),
     async setSeed(seed) {
       rng = seededRng(seed ?? randomSeed());
     },
@@ -655,6 +680,71 @@ export function createInProcessFacade(options: FacadeOptions): EngineFacade {
     roll: async (expression) => attempt(() => ({ roll: roll(expression, rng) })),
     rollDamage: async (parts, critical) => rollDamage(parts, { critical, rng }),
   };
+  return localized(facade, () => language);
+}
+
+/** Facade methods whose results are documents, content or plain data: returned as they are. */
+const UNLOCALIZED = new Set<keyof EngineFacade>([
+  "constants",
+  "configure",
+  "setLocale",
+  "renderMessages",
+  "setSeed",
+  "entries",
+  "entry",
+  "packs",
+  "creation",
+  "modifiers",
+  "newBuild",
+  "newEncounter",
+  "createState",
+  "rollAbilityScores",
+  "distance",
+  "squaresWithin",
+]);
+
+/**
+ * Every other method's result in the current language (`localize`); the builder's step titles and
+ * an option preview's stat labels too, which have no message codes.
+ */
+function localized(facade: EngineFacade, current: () => EngineLanguage | null): EngineFacade {
+  const out: Record<string, unknown> = {};
+  for (const [name, fn] of Object.entries(facade) as [
+    keyof EngineFacade,
+    (...args: unknown[]) => Promise<unknown>,
+  ][]) {
+    out[name] = UNLOCALIZED.has(name)
+      ? fn
+      : async (...args: unknown[]) => {
+          const result = await fn(...args);
+          const language = current();
+          return language ? names(localize(result, language), language) : result;
+        };
+  }
+  return out as unknown as EngineFacade;
+}
+
+/** Step titles (`title`, `step_title` next to a `step`) and stat labels (`label` next to `stat`). */
+function names<T>(value: T, language: EngineLanguage): T {
+  const walk = (v: unknown): unknown => {
+    if (Array.isArray(v)) return v.map(walk);
+    if (typeof v !== "object" || v === null) return v;
+    const o = v as Record<string, unknown>;
+    const out: Record<string, unknown> = {};
+    for (const [k, x] of Object.entries(o)) out[k] = k === "build" || k === "state" ? x : walk(x);
+    const step = typeof o.step === "string" ? language.steps[o.step as Step] : undefined;
+    if (step && typeof o.title === "string") out.title = step;
+    if (step && typeof o.step_title === "string") out.step_title = step;
+    if (typeof o.stat === "string" && typeof o.label === "string" && "before" in o) {
+      const stat = o.stat;
+      out.label =
+        (language.stats as Record<string, string>)[stat] ??
+        language.messages[`ability.${stat}` as MessageCode] ??
+        o.label;
+    }
+    return out;
+  };
+  return walk(value) as T;
 }
 
 /** The `skill` enum of each encounter action that takes one, read from the engine's schema. */
@@ -695,9 +785,17 @@ function attempt<T extends object>(fn: () => T): Outcome<T> {
     return { ok: true, ...fn() };
   } catch (error) {
     const reasons = refusalReasons(error);
-    if (reasons) return { ok: false, reasons };
-    throw error;
+    if (!reasons) throw error;
+    const messages = refusalMessages(error);
+    return messages ? { ok: false, reasons, reason_messages: messages } : { ok: false, reasons };
   }
+}
+
+function refusalMessages(error: unknown): readonly Message[] | null {
+  if (error instanceof BuildError || error instanceof PlayError || error instanceof EncounterError)
+    return error.details;
+  if (error instanceof RuleError) return [error.detail];
+  return null;
 }
 
 function refusalReasons(error: unknown): readonly string[] | null {

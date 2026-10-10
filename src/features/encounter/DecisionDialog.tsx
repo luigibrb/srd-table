@@ -10,6 +10,7 @@ import type { Pending } from "srd-rules-engine";
 import { Icon } from "@/components/Icon";
 import { Button, Dialog, Reasons } from "@/components/ui";
 import { t } from "@/i18n";
+import { useRenderedMessages } from "@/queries";
 import { useDocuments } from "@/store/documents";
 
 export function DecisionDialog({
@@ -26,6 +27,13 @@ export function DecisionDialog({
   const send = useDocuments((s) => s.encounterAction);
   const [reasons, setReasons] = useState<readonly string[] | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // The question in the current language (the stored document keeps the engine's English).
+  const { data: rendered } = useRenderedMessages(
+    `question:${JSON.stringify(pending.question_message ?? null)}`,
+    pending.question_message ? [[pending.question_message]] : [],
+  );
+  const question = rendered?.[0]?.[0] ?? pending.question;
 
   async function decide(use: boolean) {
     setBusy(true);
@@ -79,7 +87,7 @@ export function DecisionDialog({
         </>
       }
     >
-      <p className="font-display text-lg">{pending.question}</p>
+      <p className="font-display text-lg">{question}</p>
       <Reasons reasons={reasons} className="mt-2" />
     </Dialog>
   );

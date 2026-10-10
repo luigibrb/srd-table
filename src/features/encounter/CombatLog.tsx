@@ -1,9 +1,13 @@
-/** The combat log: the engine's notes for each action, newest at the bottom. */
+/**
+ * The combat log: the engine's notes for each action, newest at the bottom, in the current
+ * language (rendered from each entry's `messages`; its stored English `lines` otherwise).
+ */
 
 import { useEffect, useRef } from "react";
 import { Icon } from "@/components/Icon";
 import { Button, cx, Section } from "@/components/ui";
 import { t } from "@/i18n";
+import { useRenderedMessages } from "@/queries";
 import type { LogEntry } from "@/store/documents";
 
 export function CombatLog({
@@ -17,6 +21,10 @@ export function CombatLog({
 }) {
   const end = useRef<HTMLLIElement>(null);
   const last = log.at(-1)?.id;
+  const { data: rendered } = useRenderedMessages(
+    `log:${log[0]?.id ?? ""}:${last ?? ""}:${log.length}`,
+    log.map((e) => e.messages ?? []),
+  );
   // biome-ignore lint/correctness/useExhaustiveDependencies: scroll when a new entry arrives
   useEffect(() => {
     end.current?.scrollIntoView({ block: "nearest" });
@@ -43,7 +51,7 @@ export function CombatLog({
         <p className="text-sm text-ink-muted">{t("table.logEmpty")}</p>
       ) : (
         <ol aria-live="polite" className="space-y-1.5 text-sm">
-          {log.map((entry) => (
+          {log.map((entry, n) => (
             <li
               key={entry.id}
               className={cx(
@@ -63,7 +71,10 @@ export function CombatLog({
               {entry.tone === "decision" && (
                 <Icon name="hourglass" size={14} className="mr-1 inline text-orange" />
               )}
-              {entry.lines.map((line, i) => (
+              {(rendered?.[n]?.length === entry.lines.length
+                ? (rendered[n] as string[])
+                : entry.lines
+              ).map((line, i) => (
                 <span key={i} className="block">
                   {line}
                 </span>

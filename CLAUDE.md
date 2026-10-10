@@ -290,6 +290,28 @@ docs/            # ARCHITECTURE.md (decisions), ENGINE-GAPS.md (what the UI need
   subclass; take damage and rest in play; run a short encounter with an `ask` decision; reload
   and find everything restored from IndexedDB.
 
+## Handoff (2026-10-10, session ran out of usage)
+
+Where the last session stopped, for the next one to pick up:
+
+1. **Italian engine catalog: done, not yet committed when this note was written** — check
+   `git status`: if uncommitted, run `npm run check && npm run e2e`, then commit ("Engine texts
+   in Italian, ready for more languages"). Pieces: `src/i18n/engine/` (catalog + registry),
+   `src/engine/messages.ts`, facade `setLocale`/`renderMessages`/`localized`, `src/store/locale.ts`
+   (`applyLocale`, `startLocaleSync`), `useRenderedMessages` (combat log, decision dialog),
+   tests `tests/engine/languages.test.ts` and an Italian e2e flow. R18 filed in the engine's
+   `REQUESTS.md` (plurals, list joiners, roll labels, step/alignment codes) and tracked in
+   `docs/ENGINE-GAPS.md`. Not yet done: a nudge to the engine session about R18 (`SendMessage`).
+2. **R15 delivered by the engine (`98c6df0`, declared actions for manual play): not picked up.**
+   Read `../srd-rules-engine/docs/RESPONSES.md` > R15, `npm run engine:update`, then build the
+   "… by hand" controls described in `docs/ARCHITECTURE.md` > "Manual play" and
+   `docs/ENGINE-GAPS.md` > R15–R17 (the GM's list of declared actions waiting for an outcome,
+   per-combatant default mode, campaign defaults).
+3. Open after that: R16, R17 (engine), R18 (engine); then the dice results' roll labels in
+   Italian (R18).
+
+Delete this section once these are picked up.
+
 ## Milestones
 
 1. **Scaffold** — Vite app, Biome, vitest, Playwright, the engine worker + facade, content copy
