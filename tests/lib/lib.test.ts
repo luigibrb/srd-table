@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { t, tn } from "../../src/i18n";
+import { setLocale, t, tn } from "../../src/i18n";
 import { en } from "../../src/i18n/en";
+import { it as italian } from "../../src/i18n/it";
 import { isStateFile, pairCharacterFiles } from "../../src/lib/files";
 import { explainParts, fileSlug } from "../../src/lib/format";
 
@@ -36,6 +37,21 @@ describe("i18n", () => {
     expect(t("common.level", { level: 3 })).toBe("Level 3");
     expect(tn("characters.count", 1)).toBe("1 character");
     expect(tn("characters.count", 4)).toBe("4 characters");
+  });
+
+  it("speaks Italian with the same placeholders as English", () => {
+    const placeholders = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
+    for (const [key, text] of Object.entries(en)) {
+      expect(placeholders(italian[key as keyof typeof en]), key).toEqual(placeholders(text));
+    }
+    setLocale("it");
+    try {
+      expect(t("common.level", { level: 3 })).toBe("Livello 3");
+      expect(tn("characters.count", 1)).toBe("1 personaggio");
+      expect(tn("characters.count", 4)).toBe("4 personaggi");
+    } finally {
+      setLocale("en");
+    }
   });
 
   it("has every plural key in both forms", () => {

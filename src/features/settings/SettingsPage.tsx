@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { Button, PageTitle, Reasons, Section } from "@/components/ui";
-import { t } from "@/i18n";
+import { LOCALES, t } from "@/i18n";
 import { usePacks } from "@/queries";
 import { type DecisionMode, type Theme, useSettings } from "@/store/settings";
 
@@ -105,6 +105,23 @@ export function SettingsPage() {
                 ))}
               </div>
             </fieldset>
+          ))}
+        </div>
+      </Section>
+
+      <Section title={t("settings.language")}>
+        <p className="mb-2 text-sm text-ink-muted">{t("settings.languageHint")}</p>
+        <div className="flex gap-1">
+          {LOCALES.map((l) => (
+            <Button
+              key={l.id}
+              lang={l.id}
+              on={settings.locale === l.id}
+              aria-pressed={settings.locale === l.id}
+              onClick={() => update({ locale: l.id })}
+            >
+              {l.name}
+            </Button>
           ))}
         </div>
       </Section>

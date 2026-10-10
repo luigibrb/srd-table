@@ -221,7 +221,10 @@ Recharge uses by hand; rolls that wait for entered numbers, per combatant (like 
   Cormorant's thin strokes were the weakest part of the HP display. Text never goes below 13 px.
 - **Icons**: line drawings in `components/Icon.tsx` (24×24, stroke 1.8), never font glyphs.
 - **Language**: the app's words are in `src/i18n/en.ts` (`t`, `tn` with `Intl.PluralRules`,
-  `Intl.NumberFormat`, `Intl.ListFormat`); another language is one more catalog. Engine strings
+  `Intl.NumberFormat`, `Intl.ListFormat`), in English and Italian (`it.ts`); another language is
+  one more catalog, listed in `LOCALES`. The language is a setting (`settings.locale`); a change
+  remounts the tree under a `key`, since `t()` isn't reactive. Distances and weights stay in the
+  engine's units (feet, pounds). The SRD's license notice stays in English. Engine strings
   stay as the engine gives them; their `messages` (codes and parameters) are what a
   translation will render (R13 in ENGINE-GAPS.md).
 

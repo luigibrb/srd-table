@@ -575,6 +575,8 @@ export const en = {
     "Who answers Bardic Inspiration, Legendary Resistance and the like for new combatants. “Ask” stops the action so the player (or GM) chooses; “Automatic” takes the engine's recommendation.",
   "settings.characterDecisions": "Characters",
   "settings.monsterDecisions": "Monsters",
+  "settings.language": "Language",
+  "settings.languageHint": "The app's own words. Engine and SRD text stay in English for now.",
   "settings.theme": "Theme",
   "settings.theme.system": "Follow this device",
   "settings.theme.mat": "Mat (light)",

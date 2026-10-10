@@ -43,8 +43,10 @@ The app never works around a gap with rules of its own.
   builder and option labels. The app doesn't pass play `messages`, `reason_messages` or refusal
   `details` through yet: toasts, refusals and the dice results box aren't saved, so they need
   them only once a second language exists.
-- **Meanwhile.** App words in `src/i18n/` (English, ready for Italian); the log shows `text`.
-- **When an Italian catalog is added.** Render log entries from `messages` with the engine's
+- **Meanwhile.** App words in `src/i18n/` in English and Italian (`it.ts`); everything the
+  engine says (notes, reasons, labels, the log) shows `text`, in English.
+- **Next: an Italian catalog of the engine's codes** (`MESSAGES_EN`'s codes with Italian
+  templates, e.g. `src/i18n/engine/it.ts`, loaded in the worker). Render log entries from `messages` with the engine's
   `renderMessage(message, catalog)` (an engine value: call it in the worker through the facade,
   never on the main thread), falling back to `text`. Then pass play `messages` through the
   facade for the toasts, refusal `details` in `Refusal` (rendered where `Reasons` shows them),

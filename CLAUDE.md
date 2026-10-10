@@ -180,7 +180,9 @@ anything else.
 ### Language
 
 The app's own words live in `src/i18n/en.ts` and are read with `t()` / `tn()` (never write UI text
-in a component); another language is one more catalog. Engine strings are shown as the engine
+in a component), in English and Italian (`it.ts`, typed `Messages`, so a missing key fails the
+typecheck; the Italian terms are the Italian 5th-edition books'); another language is one more
+catalog. Settings > Language picks it; a change remounts the app (`App.tsx`). Engine strings are shown as the engine
 gives them; the engine's `messages` (codes and parameters) are what a translation will render
 (engine request R13, in `docs/ENGINE-GAPS.md`).
 

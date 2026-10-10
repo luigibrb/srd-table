@@ -1,6 +1,6 @@
 /**
  * The app's own words, kept apart from components so another language is one more file
- * (`it.ts` satisfying `Messages`). Engine strings (reasons, notes, labels, SRD text) are shown as
+ * (`it.ts` satisfying `Messages`, registered in `catalogs` and `LOCALES`). Engine strings (reasons, notes, labels, SRD text) are shown as
  * the engine gives them: translating those is an engine gap (docs/ENGINE-GAPS.md).
  *
  * `t("nav.characters")`; placeholders are `{name}`; plurals are keys ending in `.one` / `.other`
@@ -8,6 +8,7 @@
  */
 
 import { en } from "./en";
+import { it } from "./it";
 
 export type Messages = { readonly [K in keyof typeof en]: string };
 export type MessageKey = keyof typeof en;
@@ -15,7 +16,13 @@ type PluralBase<K> = K extends `${infer B}.other` ? B : never;
 export type PluralKey = PluralBase<MessageKey>;
 export type Params = Readonly<Record<string, string | number>>;
 
-const catalogs: Readonly<Record<string, Messages>> = { en };
+const catalogs: Readonly<Record<string, Messages>> = { en, it };
+
+/** The languages the app speaks, each named in its own language. */
+export const LOCALES: readonly { readonly id: string; readonly name: string }[] = [
+  { id: "en", name: "English" },
+  { id: "it", name: "Italiano" },
+];
 let locale = "en";
 let messages: Messages = en;
 
