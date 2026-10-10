@@ -49,7 +49,7 @@ export interface LogEntry {
   readonly tone: "notes" | "refusal" | "decision";
   readonly lines: readonly string[];
   /**
-   * The engine's notes as codes and parameters (one per line), kept so the log can be translated
+   * The engine's notes (or a decision's question) as codes and parameters (one per line), kept so the log can be translated
    * later (engine gap R13); `lines` is their English text.
    */
   readonly messages?: readonly Message[];
@@ -422,7 +422,13 @@ export const useDocuments = create<DocumentsState>()((set, get) => {
           if (result.pending) {
             log = appendLog(
               { ...current, log },
-              { tone: "decision", lines: [result.pending.question] },
+              {
+                tone: "decision",
+                lines: [result.pending.question],
+                ...(result.pending.question_message
+                  ? { messages: [result.pending.question_message] }
+                  : {}),
+              },
               result.encounter.round,
             );
           }

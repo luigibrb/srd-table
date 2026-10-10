@@ -25,21 +25,24 @@ The app never works around a gap with rules of its own.
 | R15 | Declared actions: costs only, outcome by hand (manual play) | open |
 | R16 | Own dice: rolls that wait for entered numbers (manual play) | open |
 | R17 | GM override of a refusal (manual play) | open |
-| R13 | Translatable engine messages | partial: stage 3 of 4 (`5602229`, `d0496d9`, `64f6e47`: every play and encounter note, roll reasons) |
+| R13 | Translatable engine messages | partial: stage 4 of 5 (`5602229` … `1a0ee68`: notes, roll reasons, refusals, decision questions) |
 
 ### R13. Translatable engine messages
 
-- **Delivered so far (stages 1–3).** Encounter results carry `messages` (`{ code, params, text }`,
+- **Delivered so far (stages 1–4).** Encounter results carry `messages` (`{ code, params, text }`,
   one per note). The facade passes them on (`EncounterChange.messages`) and the combat log
   stores them with each entry (`LogEntry.messages`, kept on load only while they match the
   lines one for one), so entries saved now can be translated later. Since `d0496d9` every
   encounter sentence of the engine's own has a code (~130 more in `MESSAGES_EN`). Since `64f6e47`
   play results (`applyAction`, `reconcileState`), damage and `castSpell` carry `messages` too,
-  and roll results carry `reason_messages` next to `reasons`. Still code `text`: decision
-  questions and a `ModeReason` passed in as a plain string. Not coded yet: refusals
-  (encounter, play, builder), the builder's labels and issues. The app doesn't pass play
-  `messages` or `reason_messages` through yet: toasts and the dice results box aren't saved,
-  so they need them only once a second language exists.
+  and roll results carry `reason_messages` next to `reasons`. Since `1a0ee68` refusals carry
+  `details` (`EncounterError`, `PlayError`, `BuildError`; `checkAction`, `previewMove`,
+  `previewArea` `reason_messages`; `OptionEntry.reason_message`) and decisions
+  `question_message`; the log stores a decision's `question_message` with its entry. Not coded
+  yet (stage 5): the builder's validation errors and issues, the play sheet's state issues,
+  builder and option labels. The app doesn't pass play `messages`, `reason_messages` or refusal
+  `details` through yet: toasts, refusals and the dice results box aren't saved, so they need
+  them only once a second language exists.
 - **Meanwhile.** App words in `src/i18n/` (English, ready for Italian); the log shows `text`.
 - **When an Italian catalog is added.** Render log entries from `messages` with the engine's
   `renderMessage(message, catalog)` (an engine value: call it in the worker through the facade,

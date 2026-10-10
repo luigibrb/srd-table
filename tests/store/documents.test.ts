@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { setEngine } from "../../src/engine/client";
+import { nodeFacade } from "../../src/engine/node";
 import { useDocuments } from "../../src/store/documents";
 import { useUi } from "../../src/store/ui";
 import { fighter } from "../fixtures/characters";
@@ -96,6 +98,38 @@ describe("documents store", () => {
     const hurt = docs().characters[aerin]?.state.hp.current;
     docs().undo(eid);
     expect(docs().characters[aerin]?.state.hp.current).not.toBe(hurt);
+  });
+
+  it("logs a decision's question with its message code", async () => {
+    // Find dice where the blue dragon fails its save against the red dragon's breath.
+    let logged = false;
+    for (let seed = 1; seed < 200 && !logged; seed++) {
+      await resetStores();
+      setEngine(nodeFacade({ seed }));
+      const eid = await docs().createEncounter("Test");
+      const r = await docs().encounterAction(eid, [
+        { type: "set_decisions", mode: "ask" },
+        { type: "add_monster", monster: "adult-red-dragon" },
+        { type: "add_monster", monster: "adult-blue-dragon" },
+        { type: "set_initiative", id: "adult-red-dragon", value: 20 },
+        { type: "set_initiative", id: "adult-blue-dragon", value: 5 },
+        { type: "start" },
+        {
+          type: "save_action",
+          id: "adult-red-dragon",
+          ability: "Fire Breath",
+          targets: ["adult-blue-dragon"],
+        },
+      ]);
+      if (!r.ok || !docs().encounters[eid]?.encounter.pending) continue;
+      const entry = docs().encounters[eid]?.log.at(-1);
+      expect(entry?.tone).toBe("decision");
+      expect(entry?.messages?.map((m) => m.text)).toEqual(entry?.lines);
+      expect(entry?.messages?.[0]?.code).toMatch(/^decision\./);
+      logged = true;
+    }
+    expect(logged).toBe(true);
+    setEngine(engine);
   });
 
   it("refuses an encounter action with the engine's reason", async () => {
