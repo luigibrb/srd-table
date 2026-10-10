@@ -22,6 +22,9 @@ The app never works around a gap with rules of its own.
 
 | Id | What the app is missing | Engine status |
 |---|---|---|
+| R15 | Declared actions: costs only, outcome by hand (manual play) | open |
+| R16 | Own dice: rolls that wait for entered numbers (manual play) | open |
+| R17 | GM override of a refusal (manual play) | open |
 | R13 | Translatable engine messages | partial: stage 3 of 4 (`5602229`, `d0496d9`, `64f6e47`: every play and encounter note, roll reasons) |
 
 ### R13. Translatable engine messages
@@ -43,6 +46,21 @@ The app never works around a gap with rules of its own.
   never on the main thread), falling back to `text`. Then pass play `messages` through the
   facade for the toasts, render the dice results box's reasons from `reason_messages`, and wire
   the last stage (decision questions, refusals, builder) as it lands.
+
+### R15–R17. Manual play
+
+- **Design.** `docs/ARCHITECTURE.md` > "Manual play" (decided 2026-10-10).
+- **Meanwhile.** Nothing by hand beyond what exists: the GM's "effects by hand" (damage,
+  healing, conditions) in the selection panel, and the sheet's slots, uses, HP and conditions.
+- **When R15 is done.** "… by hand" next to each option's button (`QuickBar`, `ActionComposer`),
+  sending the action with `manual: true`; the GM's view lists declared actions waiting for an
+  outcome, with their targets, applied through `effects`; campaign defaults for characters and
+  monsters (`store/settings.ts`) and a per-combatant mode in `SelectionPanel.tsx`.
+- **When R16 is done.** "… I'll roll" next to each option; a roll-entry dialog for
+  `pending.kind: "roll"` (like `DecisionDialog.tsx`), shown to the roll's controller; the
+  per-combatant dice setting next to the decisions mode.
+- **When R17 is done.** "Do it anyway" on a refused option, in the GM's view only, sending
+  `force: true`; the override note in the log.
 
 ## Done
 
