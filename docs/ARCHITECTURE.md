@@ -197,7 +197,7 @@ panel). Each action can still be played another way.
 **GM override.** A refused option shows "Do it anyway" in the GM's view only: the engine applies
 the action despite the refusal and the log marks it as an override. Players never see it.
 
-**Engine requests this needs** (not filed yet): a declared action (`manual: true` on attacks,
+**Engine requests this needs** (filed as R15, R16, R17; see ENGINE-GAPS.md): a declared action (`manual: true` on attacks,
 spells, features and monster actions: costs only), including spending a monster's "(1/Day)" and
 Recharge uses by hand; rolls that wait for entered numbers, per combatant (like `decisions`);
 `force` on a refused action, logged, for the GM.

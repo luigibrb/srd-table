@@ -305,8 +305,8 @@ docs/            # ARCHITECTURE.md (decisions), ENGINE-GAPS.md (what the UI need
      each action played automatically, with the players' own dice (the engine still resolves),
      or by hand (the engine spends the costs, the outcome is applied with `effects`); a default
      per combatant; only the GM applies by-hand outcomes to other creatures and overrides a
-     refusal. Needs three engine requests (declared actions with monster limited uses, rolls
-     that wait for entered numbers, `force`), then the app's controls.
+     refusal. Needs three engine requests, filed as R15 (declared actions, monster limited uses
+     included), R16 (rolls that wait for entered numbers) and R17 (`force`), then the app's controls.
 
 ## Commands
 
